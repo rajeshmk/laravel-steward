@@ -31,7 +31,7 @@ The package registers:
 - `Hatchyu\Steward\Queries\Contracts\QueryParamsParserContract`
 - `Hatchyu\Steward\Queries\Contracts\QueryParamsProcessorContract`
 
-through [StewardServiceProvider.php](/srv/www/htdocs-wallet/inculab/laravel-cqrs-test/packages/cqrs-core/src/StewardServiceProvider.php).
+through [StewardServiceProvider.php](src/StewardServiceProvider.php).
 
 ## Query parsing
 
@@ -364,12 +364,11 @@ If needed, you can still override `allowedIncludes()` and `allowedFields()` dire
 - Query parsing, query execution, request validation, and response formatting stay separate.
 - JSON:API capability is declared near the resource, then reused by request validation.
 
-## Current examples in this repository
+## Test Examples in this Repository
 
-See the working integration in:
+See the working integration and test suite in:
 
-- [ListCustomersRequest.php](/srv/www/htdocs-wallet/inculab/laravel-cqrs-test/app/Admin/Interface/Requests/ListCustomersRequest.php)
-- [CustomerResource.php](/srv/www/htdocs-wallet/inculab/laravel-cqrs-test/app/Admin/Interface/Resources/CustomerResource.php)
-- [CustomerAddressResource.php](/srv/www/htdocs-wallet/inculab/laravel-cqrs-test/app/Admin/Interface/Resources/CustomerAddressResource.php)
-- [ListCustomersQuery.php](/srv/www/htdocs-wallet/inculab/laravel-cqrs-test/app/Admin/Domain/Queries/ListCustomersQuery.php)
-- [CustomerApiTest.php](/srv/www/htdocs-wallet/inculab/laravel-cqrs-test/tests/Feature/Api/CustomerApiTest.php)
+- [ListQueryRequestValidationTest.php](tests/Unit/ListQueryRequestValidationTest.php)
+- [GetModelQueryJsonApiIncludeTest.php](tests/Unit/GetModelQueryJsonApiIncludeTest.php)
+- [FindModelQueryTest.php](tests/Unit/FindModelQueryTest.php)
+- [WriteActionsTest.php](tests/Unit/WriteActionsTest.php)
