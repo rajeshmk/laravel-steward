@@ -16,14 +16,42 @@ The package intentionally uses Laravel's built-in JSON:API resource support inst
 
 ## Installation
 
-Add the package to your project and let Laravel discover the service provider:
+### Via Direct Git Repository URL
+
+Add the repository definition to your target Laravel project's `composer.json`:
 
 ```json
-{
-  "require": {
-    "hatchyu/laravel-steward": "dev-main"
-  }
-}
+"repositories": [
+    {
+        "type": "vcs",
+        "url": "git@github.com:rajeshmk/laravel-steward.git"
+    }
+]
+```
+
+Then run Composer require:
+
+```bash
+composer require hatchyu/laravel-steward:dev-main
+```
+
+### Via Local Path (For Local Development)
+
+If developing locally alongside your application:
+
+```json
+"repositories": [
+    {
+        "type": "path",
+        "url": "../common-packages/laravel-steward"
+    }
+]
+```
+
+Then run:
+
+```bash
+composer require hatchyu/laravel-steward:@dev
 ```
 
 The package registers:
