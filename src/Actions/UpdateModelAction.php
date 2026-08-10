@@ -11,16 +11,24 @@ use Illuminate\Database\Eloquent\Model;
 use LogicException;
 use Throwable;
 
+/**
+ * @template TModel of Model
+ * @template TData of AbstractData
+ * @extends AbstractModelAction<TModel, TData>
+ */
 abstract class UpdateModelAction extends AbstractModelAction
 {
     public function __construct(
         private readonly FindModelQueryContract $findModelQuery,
     ) {}
 
+    /**
+     * @param int|string $id
+     * @param TData $data
+     * @return TModel
+     */
     final public function execute(int|string $id, AbstractData $data): Model
     {
-        $this->ensureExpectedDataClass($data);
-
         return $this->transaction(function () use ($id, $data): Model {
             $actionModelClass = $this->model()::class;
             $queryModelClass = $this->findModelQuery->modelClass();
@@ -39,10 +47,13 @@ abstract class UpdateModelAction extends AbstractModelAction
         });
     }
 
+    /**
+     * @param TModel $model
+     * @param TData $data
+     * @return TModel
+     */
     final public function executeModel(Model $model, AbstractData $data): Model
     {
-        $this->ensureExpectedDataClass($data);
-
         $modelKey = $model->getKey();
 
         if (
@@ -56,21 +67,39 @@ abstract class UpdateModelAction extends AbstractModelAction
         return $this->transaction(fn (): Model => $this->executeUpdate($model, $data));
     }
 
+    /**
+     * @param TModel $model
+     * @param TData $data
+     */
     protected function beforePersist(Model $model, AbstractData $data): void
     {
         // Hook for subclasses.
     }
 
+    /**
+     * @param TModel $model
+     * @param TData $data
+     */
     protected function afterPersist(Model $model, AbstractData $data): void
     {
         // Hook for subclasses.
     }
 
+    /**
+     * @param TModel $model
+     * @param TData $data
+     * @return TModel
+     */
     protected function afterExecute(Model $model, AbstractData $data): Model
     {
         return $model;
     }
 
+    /**
+     * @param TModel $model
+     * @param TData $data
+     * @return TModel
+     */
     private function executeUpdate(Model $model, AbstractData $data): Model
     {
         $this->beforePersist($model, $data);

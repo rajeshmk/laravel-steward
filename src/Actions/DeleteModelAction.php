@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Hatchyu\Steward\Actions;
 
-use Hatchyu\Steward\Data\AbstractData;
 use Hatchyu\Steward\Exceptions\DeleteModelException;
 use Hatchyu\Steward\Queries\Contracts\FindModelQueryContract;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @template TModel of Model
+ * @extends AbstractModelAction<TModel, \Hatchyu\Steward\Data\AbstractData>
+ */
 abstract class DeleteModelAction extends AbstractModelAction
 {
     public function __construct(
@@ -22,6 +25,9 @@ abstract class DeleteModelAction extends AbstractModelAction
         $this->executeModel($model);
     }
 
+    /**
+     * @param TModel $model
+     */
     final public function executeModel(Model $model): void
     {
         $this->transaction(function () use ($model): void {
@@ -31,15 +37,5 @@ abstract class DeleteModelAction extends AbstractModelAction
                 throw new DeleteModelException();
             }
         });
-    }
-
-    /**
-     * DeleteModelAction does not accept request data.
-     *
-     * @return list<class-string<AbstractData>>
-     */
-    protected function expectedDataClasses(): array
-    {
-        return [];
     }
 }

@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Hatchyu\Steward\Tests\TestCase;
 
-
 test('UpdateModelAction executeModel validates model registration and updates attributes', function (): void {
     $model = new class() extends Model
     {
@@ -84,9 +83,9 @@ test('UpdateModelAction executeModel validates model registration and updates at
         }
     };
 
-    $action = new class($findQuery, $model, $dummyDataClass::class) extends UpdateModelAction
+    $action = new class($findQuery, $model) extends UpdateModelAction
     {
-        public function __construct(FindModelQueryContract $query, private Model $targetModel, private string $expectedClass)
+        public function __construct(FindModelQueryContract $query, private Model $targetModel)
         {
             parent::__construct($query);
         }
@@ -94,11 +93,6 @@ test('UpdateModelAction executeModel validates model registration and updates at
         public function model(): Model
         {
             return $this->targetModel;
-        }
-
-        protected function expectedDataClasses(): array
-        {
-            return [$this->expectedClass];
         }
     };
 
@@ -171,9 +165,9 @@ test('UpdateModelAction executeModel throws Exception for non-existent model', f
         }
     };
 
-    $action = new class($findQuery, $model, $dummyDataClass::class) extends UpdateModelAction
+    $action = new class($findQuery, $model) extends UpdateModelAction
     {
-        public function __construct(FindModelQueryContract $query, private Model $targetModel, private string $expectedClass)
+        public function __construct(FindModelQueryContract $query, private Model $targetModel)
         {
             parent::__construct($query);
         }
@@ -181,11 +175,6 @@ test('UpdateModelAction executeModel throws Exception for non-existent model', f
         public function model(): Model
         {
             return $this->targetModel;
-        }
-
-        protected function expectedDataClasses(): array
-        {
-            return [$this->expectedClass];
         }
     };
 
