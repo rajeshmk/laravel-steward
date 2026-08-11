@@ -115,7 +115,7 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
             }
 
             foreach ($resourceClass::jsonApiAllowedFieldsets($depth - 1) as $type => $fields) {
-                $fieldsets[$type] ??= $fields;
+                $fieldsets[$type] = array_values(array_unique(array_merge($fieldsets[$type] ?? [], $fields)));
             }
         }
 

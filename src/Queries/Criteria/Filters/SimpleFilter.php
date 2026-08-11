@@ -27,6 +27,19 @@ final class SimpleFilter extends AbstractFilter
             return $query->where($this->field, $value);
         }
 
+        $hasNull = in_array(null, $values, true);
+        $nonNullValues = array_values(array_filter($values, static fn (mixed $v): bool => $v !== null));
+
+        if ($hasNull) {
+            return $query->where(function (Builder $q) use ($nonNullValues): void {
+                if ($nonNullValues !== []) {
+                    $q->whereIn($this->field, $nonNullValues)->orWhereNull($this->field);
+                } else {
+                    $q->whereNull($this->field);
+                }
+            });
+        }
+
         return $query->whereIn($this->field, $values);
     }
 }
