@@ -101,6 +101,22 @@ Notes:
 - Bracket-style query params (`filter[field]=...`) are usually easier to read and operate.
 - JSON-string filters are supported for clients that already serialize query payloads that way.
 
+### Query Parameter Conventions
+
+`laravel-steward` uses standard, fixed query parameter conventions across its parsers:
+
+| Parameter | Type | Format / Example | Description |
+| :--- | :--- | :--- | :--- |
+| `search` | `string` | `?search=john` | Free-text search string. In JSON:API format, `?filter[search]=john` is also supported. |
+| `filter` | `array\|string` | `?filter[status]=active` or `?filter={"status":"active"}` | Array or JSON object string of field filtering criteria. |
+| `sort` | `string\|array` | `?sort=-created_at,name` | Comma-separated string or array. Prefix `-` denotes descending order (`desc`). |
+| `include` | `string` | `?include=addresses,orders.items` | Comma-separated list of relationship inclusion paths. |
+| `fields` | `array` | `?fields[customers]=name,email` | Object keyed by JSON:API resource type specifying sparse fieldsets. |
+| `page[number]` | `integer` | `?page[number]=2` | Page number for offset pagination (1-indexed, minimum `1`). |
+| `page[size]` | `integer` | `?page[size]=25` | Number of records per page (minimum `1`, maximum `100`). |
+| `page[cursor]` | `string` | `?page[cursor]=eyJpZCI6MTB9` | Cursor token string for cursor-based pagination. |
+| `size` | `integer` | `?size=25` | Top-level fallback parameter for page size. |
+
 Convert a request into normalized query params:
 
 ```php
