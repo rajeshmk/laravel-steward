@@ -14,6 +14,13 @@ Elegant CQRS primitives, request query parsing, and native JSON:API stewardship 
 
 The package intentionally uses Laravel's built-in JSON:API resource support instead of `league/fractal`.
 
+> [!IMPORTANT]
+> **Security & Authorization Boundaries**  
+> `laravel-steward` is a **CQRS data orchestration and query engine**, not an authorization or multi-tenancy boundary.
+> - **Authorization**: Always perform Policy checks (`$this->authorize(...)` / `Gate::authorize()`) in your Controllers or Form Requests before passing models to Steward Actions.
+> - **Tenant Scoping**: Ensure tenant-scoped global scopes or explicit query scoping (e.g., `$user->team->customers()`) are applied prior to executing Steward Queries or Actions.
+> Steward assumes the model or query passed into its pipeline has already been authorized and scoped by your application.
+
 ## Installation
 
 ### Via Direct Git Repository URL
