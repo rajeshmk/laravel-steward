@@ -70,3 +70,35 @@ test('it throws when null is passed to non-nullable bool property', function ():
         'is_active' => null,
     ]))->toThrow(InvalidArgumentException::class);
 });
+
+test('it safely normalizes scalar request values for concrete scalar DTO properties', function (): void {
+    $dataClass = (new class(0, 0.0, '') extends \Hatchyu\Steward\Data\AbstractData
+    {
+        public function __construct(
+            public int $count,
+            public float $amount,
+            public string $reference,
+        ) {}
+    })::class;
+
+    $result = $dataClass::fromArray([
+        'count' => '12',
+        'amount' => '19.95',
+        'reference' => 42,
+    ]);
+
+    expect($result->count)->toBe(12)
+        ->and($result->amount)->toBe(19.95)
+        ->and($result->reference)->toBe('42');
+});
+
+test('it preserves PHP union behavior rather than coercing bool|string values to bool', function (): void {
+    $dataClass = (new class('') extends \Hatchyu\Steward\Data\AbstractData
+    {
+        public function __construct(public bool|string $value) {}
+    })::class;
+
+    $result = $dataClass::fromArray(['value' => 'external-reference']);
+
+    expect($result->value)->toBe('external-reference');
+});

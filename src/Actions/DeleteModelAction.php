@@ -7,6 +7,7 @@ namespace Hatchyu\Steward\Actions;
 use Hatchyu\Steward\Exceptions\DeleteModelException;
 use Hatchyu\Steward\Queries\Contracts\FindModelQueryContract;
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 
 /**
  * @template TModel of Model
@@ -30,8 +31,18 @@ abstract class DeleteModelAction extends AbstractModelAction
      */
     final public function executeModel(Model $model): void
     {
+        if (! $this->isExpectedPersistedModel($model)) {
+            throw new DeleteModelException('The supplied model is not valid for this action.');
+        }
+
         $this->transaction(function () use ($model): void {
-            $deleted = $model->delete();
+            try {
+                $deleted = $model->delete();
+            } catch (Throwable $exception) {
+                // Retain diagnostic information for logs while returning a
+                // stable, non-sensitive API error to the client.
+                throw new DeleteModelException(previous: $exception);
+            }
 
             if (! $deleted) {
                 throw new DeleteModelException();

@@ -47,6 +47,14 @@ test('it parses sparse fieldsets', function (): void {
     ]);
 });
 
+test('it rejects malformed sparse field names', function (): void {
+    $parser = new DefaultQueryParamsParser();
+
+    expect(fn (): mixed => $parser->parse([
+        'fields' => ['customers' => 'name,invalid-field'],
+    ]))->toThrow(ValidationException::class);
+});
+
 test('it throws when filter is invalid json string', function (): void {
     $parser = new DefaultQueryParamsParser();
 

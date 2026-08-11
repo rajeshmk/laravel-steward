@@ -24,6 +24,12 @@ final readonly class FieldsQueryRule implements ValidationRule
             return;
         }
 
+        if ($value !== [] && $this->allowedFields === []) {
+            $fail('Sparse fieldsets are not supported for this request.');
+
+            return;
+        }
+
         foreach ($value as $type => $fieldSet) {
             if (! is_string($type) || ! preg_match('/^[A-Za-z_][A-Za-z0-9_-]*$/', $type)) {
                 $fail(sprintf('Invalid resource type for fields: %s.', (string) $type));
@@ -37,23 +43,25 @@ final readonly class FieldsQueryRule implements ValidationRule
                 continue;
             }
 
-            if ($this->allowedFields !== [] && ! array_key_exists($type, $this->allowedFields)) {
+            if (! array_key_exists($type, $this->allowedFields)) {
                 $fail(sprintf('Unsupported fields type: %s.', $type));
 
                 continue;
             }
 
             $fields = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
-            $allowed = $this->allowedFields[$type] ?? null;
+            $allowed = array_key_exists($type, $this->allowedFields)
+                ? $this->allowedFields[$type]
+                : null;
 
             foreach ($fields as $field) {
-                if (! preg_match('/^[A-Za-z_]\w*$/', $field)) {
+                if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $field)) {
                     $fail(sprintf('Invalid field name for %s: %s.', $type, $field));
 
                     continue;
                 }
 
-                if (is_array($allowed) && $allowed !== [] && ! in_array($field, $allowed, true)) {
+                if (is_array($allowed) && ! in_array($field, $allowed, true)) {
                     $fail(sprintf('Unsupported field for %s: %s.', $type, $field));
                 }
             }

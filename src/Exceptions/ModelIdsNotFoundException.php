@@ -19,7 +19,7 @@ class ModelIdsNotFoundException extends ApiModelNotFoundException
      */
     public function __construct(string $modelClass, array $ids)
     {
-        $this->ids = array_values($ids);
+        $this->ids = $ids;
         $firstId = $this->ids[0] ?? '';
 
         parent::__construct($modelClass, $firstId);

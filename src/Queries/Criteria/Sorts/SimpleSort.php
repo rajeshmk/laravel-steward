@@ -12,6 +12,8 @@ final class SimpleSort extends AbstractSort
     {
         $direction = $value === 'desc' ? 'desc' : 'asc';
 
-        return $query->orderBy($this->field, $direction);
+        $query->orderBy($this->field, $direction);
+
+        return $query;
     }
 }

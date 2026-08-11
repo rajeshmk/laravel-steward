@@ -61,10 +61,6 @@ final class DefaultQueryParamsProcessor implements QueryParamsProcessorContract
 
         $query->where(function (Builder $builder) use ($params, $definition): void {
             foreach ($definition->searchable as $search) {
-                if (! $search instanceof AbstractSearch) {
-                    continue;
-                }
-
                 $search->apply($builder, $params->search);
             }
         });
@@ -73,10 +69,6 @@ final class DefaultQueryParamsProcessor implements QueryParamsProcessorContract
     private function applyFilters(Builder $query, QueryParams $params, QueryDefinition $definition): void
     {
         foreach ($params->filters as $field => $value) {
-            if (! is_string($field)) {
-                continue;
-            }
-
             $filter = $this->findFilter($definition, $field);
             if (! $filter instanceof AbstractFilter) {
                 continue;
@@ -101,7 +93,7 @@ final class DefaultQueryParamsProcessor implements QueryParamsProcessorContract
     private function findFilter(QueryDefinition $definition, string $name): ?AbstractFilter
     {
         foreach ($definition->filterable as $filter) {
-            if ($filter instanceof AbstractFilter && $filter->matches($name)) {
+            if ($filter->matches($name)) {
                 return $filter;
             }
         }
@@ -112,7 +104,7 @@ final class DefaultQueryParamsProcessor implements QueryParamsProcessorContract
     private function findSort(QueryDefinition $definition, string $name): ?AbstractSort
     {
         foreach ($definition->sortable as $sort) {
-            if ($sort instanceof AbstractSort && $sort->matches($name)) {
+            if ($sort->matches($name)) {
                 return $sort;
             }
         }

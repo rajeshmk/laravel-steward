@@ -32,7 +32,9 @@ abstract class CreateModelAction extends AbstractModelAction
 
                 $status = $model->save();
             } catch (Throwable $exception) {
-                throw new CreateModelException(message: $exception->getMessage(), previous: $exception);
+                // Keep database/framework details in the exception chain for
+                // logging, but never return them as the API response message.
+                throw new CreateModelException(previous: $exception);
             }
 
             if ($status === false) {

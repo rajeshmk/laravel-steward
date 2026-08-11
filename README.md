@@ -29,10 +29,10 @@ Add the repository definition to your target Laravel project's `composer.json`:
 ]
 ```
 
-Then run Composer require:
+Then require a tagged release:
 
 ```bash
-composer require hatchyu/laravel-steward:dev-main
+composer require hatchyu/laravel-steward:^0.1
 ```
 
 ### Via Local Path (For Local Development)
@@ -117,6 +117,8 @@ It includes:
 - `fields`
 - `page`
 - `size`
+
+For safety, list endpoints reject `include` and sparse `fields[...]` parameters unless the query or request declares them explicitly. When using `JsonApiResource`, its resource metadata supplies those allowlists automatically. Non-JSON:API queries can override `GetModelQuery::allowedIncludes()`.
 
 ## Query definitions
 
@@ -269,9 +271,13 @@ $params = ListCustomersRequest::from($request)->toQueryParams();
 return $query->cursorPaginateByQueryParams($queryBuilder, $params);
 ```
 
+When using `cursorPaginateByQueryParams()`, Steward appends the model primary key as a tie-breaker when the requested sort does not already include it. This keeps cursor traversal stable when a client sorts on non-unique values.
+
 ## Data objects
 
 `AbstractData` lets you map validated input into typed DTO-style objects.
+
+It normalizes booleans, backed/unit enums, and concrete `int`, `float`, and `string` constructor properties. Validate request data before constructing DTOs; ambiguous union types intentionally retain PHP's native type resolution.
 
 Use it for action payloads and request body transformation. The test suite includes examples of case conversion and nullable handling under `tests/Unit/`.
 

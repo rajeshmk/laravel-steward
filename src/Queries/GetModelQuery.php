@@ -105,8 +105,18 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         $query = $this->applyIncludes($query, $params);
 
         if ($params->sort === []) {
-            $column = config('steward.default_sort_column') ?? $this->model->getKeyName();
-            $direction = config('steward.default_sort_direction', 'desc');
+            $column = config('steward.default_sort_column');
+
+            if (! is_string($column) || trim($column) === '') {
+                $column = $this->model->getKeyName();
+            }
+
+            $direction = strtolower(trim((string) config('steward.default_sort_direction', 'desc')));
+
+            if (! in_array($direction, ['asc', 'desc'], true)) {
+                $direction = 'desc';
+            }
+
             $query->orderBy($this->model->qualifyColumn($column), $direction);
         }
 
@@ -134,6 +144,8 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         array $columns = ['*'],
         string $cursorName = 'cursor',
     ): CursorPaginator {
+        $this->ensureCursorOrderIsUnique($query);
+
         return $this->queryParamsProcessor->cursorPaginate($query, $params, $columns, $cursorName);
     }
 
@@ -145,9 +157,20 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         return null;
     }
 
+    /**
+     * Explicit include allowlist for queries without JsonApiResource metadata.
+     * An empty list means that includes are not supported.
+     *
+     * @return list<string>
+     */
+    protected function allowedIncludes(): array
+    {
+        return [];
+    }
+
     private function ensureAllowedFilters(QueryParams $params, QueryDefinition $definition): void
     {
-        if ($params->filters === [] || $definition->filterable === []) {
+        if ($params->filters === []) {
             return;
         }
 
@@ -168,7 +191,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     private function ensureAllowedSort(QueryParams $params, QueryDefinition $definition): void
     {
-        if ($params->sort === [] || $definition->sortable === []) {
+        if ($params->sort === []) {
             return;
         }
 
@@ -179,10 +202,6 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         );
 
         foreach ($params->sort as $sortField) {
-            if (! $sortField instanceof SortField) {
-                continue;
-            }
-
             if (! in_array($sortField->field, $allowed, true)) {
                 $unknown[] = $sortField->field;
             }
@@ -218,13 +237,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
             return;
         }
 
-        $resource = $this->jsonApiResource();
-
-        if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
-            return;
-        }
-
-        $allowed = $resource::jsonApiAllowedIncludes();
+        $allowed = $this->resolvedAllowedIncludes();
         $unknown = array_values(array_diff($params->includes, $allowed));
 
         if ($unknown === []) {
@@ -245,6 +258,8 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         $resource = $this->jsonApiResource();
 
         if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
+            // Includes were checked against allowedIncludes() before reaching
+            // this point.
             return $query->with($params->includes);
         }
 
@@ -286,7 +301,9 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         $resource = $this->jsonApiResource();
 
         if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
-            return;
+            throw ValidationException::withMessages([
+                'fields' => 'Sparse fieldsets are not supported for this query.',
+            ]);
         }
 
         $allowedFieldsets = $resource::jsonApiAllowedFieldsets();
@@ -476,7 +493,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         $columns = [];
 
         if ($relation instanceof MorphTo) {
-            $columns[] = $qualifier($relation->getOwnerKeyName() ?? $relation->getRelated()->getKeyName());
+            $columns[] = $qualifier($relation->getOwnerKeyName());
 
             return $columns;
         }
@@ -545,5 +562,44 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         }
 
         return array_values(array_filter($nested));
+    }
+
+    private function ensureCursorOrderIsUnique(Builder $query): void
+    {
+        $keyName = $this->model->getKeyName();
+        $keyColumn = $this->model->qualifyColumn($keyName);
+        $orders = $query->getQuery()->orders ?? [];
+
+        foreach ($orders as $order) {
+            if (($order['column'] ?? null) === $keyColumn || ($order['column'] ?? null) === $keyName) {
+                return;
+            }
+        }
+
+        $lastOrder = $orders === [] ? null : $orders[array_key_last($orders)];
+        $direction = is_array($lastOrder) && in_array($lastOrder['direction'] ?? null, ['asc', 'desc'], true)
+            ? $lastOrder['direction']
+            : 'asc';
+
+        $query->orderBy($keyColumn, $direction);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function resolvedAllowedIncludes(): array
+    {
+        $explicitIncludes = $this->allowedIncludes();
+        if ($explicitIncludes !== []) {
+            return array_values(array_unique($explicitIncludes));
+        }
+
+        $resource = $this->jsonApiResource();
+
+        if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
+            return [];
+        }
+
+        return $resource::jsonApiAllowedIncludes();
     }
 }

@@ -19,11 +19,6 @@ abstract class AbstractModelQuery extends AbstractQuery
         protected readonly Model $model,
     ) {}
 
-    public static function for(Model $model): static
-    {
-        return new static($model);
-    }
-
     protected function query(): Builder
     {
         $query = $this->apply($this->model->query());

@@ -45,6 +45,24 @@ abstract class AbstractModelAction extends AbstractAction
     }
 
     /**
+     * Determine whether an existing model is safe for this action to persist.
+     *
+     * Accepting a model merely because it uses the same table is unsafe: two
+     * Eloquent model classes can intentionally share a table while having
+     * different casts, guards, observers, or authorization semantics.
+     *
+     * @param TModel $model
+     */
+    protected function isExpectedPersistedModel(Model $model): bool
+    {
+        $expectedModelClass = $this->model()::class;
+
+        return $model instanceof $expectedModelClass
+            && $model->exists
+            && $model->getKey() !== null;
+    }
+
+    /**
      * @param TModel $model
      * @param TData $data
      */

@@ -284,7 +284,17 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
                 ]);
             }
 
-            $normalized[$type] = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
+            $fieldNames = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
+
+            foreach ($fieldNames as $fieldName) {
+                if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $fieldName)) {
+                    throw ValidationException::withMessages([
+                        'fields' => sprintf('Invalid field name for %s: %s.', $type, $fieldName),
+                    ]);
+                }
+            }
+
+            $normalized[$type] = array_values(array_unique($fieldNames));
         }
 
         return $normalized;

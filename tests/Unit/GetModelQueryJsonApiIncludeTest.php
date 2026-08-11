@@ -71,3 +71,32 @@ test('it rejects unsupported jsonapi include params at query level', function ()
         ->toThrow(ValidationException::class)
     ;
 });
+
+test('it rejects filters and sorts when the query has not declared them', function (): void {
+    $query = resolve(GetModelQueryJsonApiIncludeTestQuery::class);
+
+    expect(fn (): mixed => $query->applyForTest(new QueryParams(filters: ['status' => 'active'])))
+        ->toThrow(ValidationException::class)
+        ->and(fn (): mixed => $query->applyForTest(new QueryParams(sort: [new \Hatchyu\Steward\Queries\Params\SortField('name')])))
+        ->toThrow(ValidationException::class)
+    ;
+});
+
+test('it rejects include and fieldset requests without explicit resource metadata', function (): void {
+    $query = new class(new Customer(), resolve(\Hatchyu\Steward\Queries\Contracts\QueryParamsProcessorContract::class)) extends \Hatchyu\Steward\Queries\GetModelQuery
+    {
+        public function applyForTest(QueryParams $params): \Illuminate\Database\Eloquent\Builder
+        {
+            $builder = $this->query();
+            $this->applyQueryParams($builder, $params);
+
+            return $builder;
+        }
+    };
+
+    expect(fn (): mixed => $query->applyForTest(new QueryParams(includes: ['addresses'])))
+        ->toThrow(ValidationException::class)
+        ->and(fn (): mixed => $query->applyForTest(new QueryParams(fields: ['customers' => ['name']])))
+        ->toThrow(ValidationException::class)
+    ;
+});

@@ -13,9 +13,13 @@ final class SimpleSearch extends AbstractSearch
         $value = $this->normalizeSearchValue($value);
 
         if ($value === null) {
-            return $query->orWhereNull($this->field);
+            $query->orWhereNull($this->field);
+
+            return $query;
         }
 
-        return $query->orWhere($this->field, '=', $value);
+        $query->orWhere($this->field, '=', $value);
+
+        return $query;
     }
 }

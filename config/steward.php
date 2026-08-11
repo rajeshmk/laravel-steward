@@ -26,37 +26,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Query string parameter names
-    |--------------------------------------------------------------------------
-    |
-    | Names for include, filter, sort, search, page, and size (legacy) query params.
-    | Used when parsing requests; override to match your API conventions.
-    |
-    */
-    'parameters' => [
-        'include' => 'include',
-        'filter' => 'filter',
-        'sort' => 'sort',
-        'search' => 'search',
-        'page' => 'page',
-        'size' => 'size',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Page parameter keys
-    |--------------------------------------------------------------------------
-    |
-    | Keys used inside the page query parameter, e.g. page[number], page[size].
-    |
-    */
-    'page_parameters' => [
-        'number' => 'number',
-        'size' => 'size',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Default page size
     |--------------------------------------------------------------------------
     |

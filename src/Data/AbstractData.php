@@ -11,6 +11,7 @@ use ReflectionEnum;
 use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionUnionType;
+use Stringable;
 use UnitEnum;
 
 abstract class AbstractData
@@ -58,7 +59,7 @@ abstract class AbstractData
             self::throwMissingAttributeException($name);
         }
 
-        return new static(...$args);
+        return (new ReflectionClass(static::class))->newInstanceArgs($args);
     }
 
     public function toArray(): array
@@ -150,8 +151,17 @@ abstract class AbstractData
             return null;
         }
 
-        if (self::containsBuiltinType($type, 'bool')) {
+        if (self::isBooleanType($type)) {
             return self::castValueToBool($parameter->getName(), $value);
+        }
+
+        if ($type instanceof ReflectionNamedType && $type->isBuiltin()) {
+            return match ($type->getName()) {
+                'int' => self::castValueToInt($parameter->getName(), $value),
+                'float' => self::castValueToFloat($parameter->getName(), $value),
+                'string' => self::castValueToString($parameter->getName(), $value),
+                default => $value,
+            };
         }
 
         if ($enumType === null) {
@@ -165,18 +175,15 @@ abstract class AbstractData
         return self::castValueToEnum($parameter->getName(), $enumType, $value);
     }
 
-    private static function containsBuiltinType(ReflectionNamedType|ReflectionUnionType $type, string $builtin): bool
+    private static function isBooleanType(ReflectionNamedType|ReflectionUnionType $type): bool
     {
         if ($type instanceof ReflectionNamedType) {
-            return $type->isBuiltin() && $type->getName() === $builtin;
+            return $type->isBuiltin() && $type->getName() === 'bool';
         }
 
-        foreach ($type->getTypes() as $unionType) {
-            if ($unionType instanceof ReflectionNamedType && $unionType->isBuiltin() && $unionType->getName() === $builtin) {
-                return true;
-            }
-        }
-
+        // A bool|string (or similar) union should retain PHP's normal union
+        // resolution; coercing every value to bool would make valid strings
+        // unexpectedly fail or change meaning.
         return false;
     }
 
@@ -355,6 +362,62 @@ abstract class AbstractData
         }
 
         return $normalized;
+    }
+
+    private static function castValueToInt(string $parameterName, mixed $value): int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && preg_match('/^-?\d+$/', $value) === 1) {
+            return (int) $value;
+        }
+
+        self::throwInvalidScalarAttributeException($parameterName, 'integer', $value);
+    }
+
+    private static function castValueToFloat(string $parameterName, mixed $value): float
+    {
+        if (is_float($value) || is_int($value)) {
+            return (float) $value;
+        }
+
+        if (is_string($value) && is_numeric($value)) {
+            return (float) $value;
+        }
+
+        self::throwInvalidScalarAttributeException($parameterName, 'number', $value);
+    }
+
+    private static function castValueToString(string $parameterName, mixed $value): string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_int($value) || is_float($value) || is_bool($value) || $value instanceof Stringable) {
+            return (string) $value;
+        }
+
+        self::throwInvalidScalarAttributeException($parameterName, 'string', $value);
+    }
+
+    private static function throwInvalidScalarAttributeException(
+        string $parameterName,
+        string $expectedType,
+        mixed $value,
+    ): never {
+        throw new InvalidArgumentException(
+            sprintf(
+                'Invalid %s value for attribute "%s" in %s. Got %s (%s).',
+                $expectedType,
+                $parameterName,
+                static::class,
+                get_debug_type($value),
+                self::stringifyValue($value)
+            )
+        );
     }
 
     private static function toSnakeCase(string $value): string

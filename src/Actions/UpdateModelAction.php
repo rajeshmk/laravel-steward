@@ -54,14 +54,8 @@ abstract class UpdateModelAction extends AbstractModelAction
      */
     final public function executeModel(Model $model, AbstractData $data): Model
     {
-        $modelKey = $model->getKey();
-
-        if (
-            ! $model->exists
-            || $modelKey === null
-            || ! $this->isRegisteredInstance($model)
-        ) {
-            throw new UpdateModelException(message: sprintf('Model [%s] with key [%s] is not a valid registered instance.', $model::class, (string) $modelKey));
+        if (! $this->isExpectedPersistedModel($model)) {
+            throw new UpdateModelException('The supplied model is not valid for this action.');
         }
 
         return $this->transaction(fn (): Model => $this->executeUpdate($model, $data));
@@ -109,7 +103,9 @@ abstract class UpdateModelAction extends AbstractModelAction
 
             $status = $model->save();
         } catch (Throwable $exception) {
-            throw new UpdateModelException(message: $exception->getMessage(), previous: $exception);
+            // Preserve the cause for logging without exposing persistence
+            // internals (such as SQL or bound values) to API consumers.
+            throw new UpdateModelException(previous: $exception);
         }
 
         if ($status === false) {
@@ -119,16 +115,5 @@ abstract class UpdateModelAction extends AbstractModelAction
         $this->afterPersist($model, $data);
 
         return $this->afterExecute($model, $data);
-    }
-
-    private function isRegisteredInstance(Model $model): bool
-    {
-        $registeredModel = $this->model();
-
-        return $registeredModel->getTable() === $model->getTable()
-            && (
-                $registeredModel->getConnectionName() === null
-                || $registeredModel->getConnectionName() === $model->getConnectionName()
-            );
     }
 }

@@ -33,12 +33,18 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
             ]);
         }
 
+        if (array_key_exists('cursor', $params)) {
+            throw ValidationException::withMessages([
+                'cursor' => 'Use page[cursor] for JSON:API cursor pagination.',
+            ]);
+        }
+
         $filters = $this->normalizeFilters($params['filter'] ?? null, array_key_exists('filter', $params));
         $search = $this->normalizeSearch($params['search'] ?? null, $filters);
         $sort = $this->normalizeSort($params['sort'] ?? null, array_key_exists('sort', $params));
         $includes = $this->normalizeIncludes($params['include'] ?? null, array_key_exists('include', $params));
         $fields = $this->normalizeFields($params['fields'] ?? null, array_key_exists('fields', $params));
-        $cursor = $this->normalizeCursor(($params['page']['cursor'] ?? null) ?? ($params['cursor'] ?? null));
+        $cursor = $this->normalizeCursor($params['page']['cursor'] ?? null);
         [$page, $size] = $this->normalizePagination($params['page'] ?? null, array_key_exists('page', $params));
 
         return new QueryParams(
@@ -137,14 +143,6 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
 
         return $normalized;
     }
-
-    /**
-     * @TODO
-     * regarding
-     * "Normalize 'true'/'false' strings to booleans (from query string or JSON)."
-     *
-     * we can normalize string true/false to boolean in default query request. DO NOT convert them from a json input, because incoming json should be strict enough
-     */
 
     /**
      * @param array<string, mixed> $filters
@@ -288,7 +286,17 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
                 ]);
             }
 
-            $normalized[$type] = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
+            $fieldNames = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
+
+            foreach ($fieldNames as $fieldName) {
+                if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $fieldName)) {
+                    throw ValidationException::withMessages([
+                        'fields' => sprintf('Invalid field name for %s: %s.', $type, $fieldName),
+                    ]);
+                }
+            }
+
+            $normalized[$type] = array_values(array_unique($fieldNames));
         }
 
         return $normalized;

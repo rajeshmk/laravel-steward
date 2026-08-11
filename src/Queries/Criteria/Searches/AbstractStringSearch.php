@@ -19,11 +19,15 @@ abstract class AbstractStringSearch extends AbstractSearch
         }
 
         if ($value === null) {
-            return $query->orWhereNull($this->field);
+            $query->orWhereNull($this->field);
+
+            return $query;
         }
 
         if (! is_string($value)) {
-            return $query->orWhere($this->field, '=', $value);
+            $query->orWhere($this->field, '=', $value);
+
+            return $query;
         }
 
         return $this->applyStringSearch($query, $value);
@@ -42,6 +46,8 @@ abstract class AbstractStringSearch extends AbstractSearch
     {
         $escapedValue = $this->escapeLike($value);
 
-        return $query->orWhere($this->field, 'like', $escapedValue);
+        $query->orWhere($this->field, 'like', $escapedValue);
+
+        return $query;
     }
 }

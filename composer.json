@@ -3,7 +3,6 @@
     "description": "Elegant CQRS primitives, request query parsing, and native JSON:API stewardship for Laravel.",
     "type": "library",
     "license": "MIT",
-    "version": "dev-main",
     "keywords": [
         "laravel",
         "cqrs",
@@ -38,7 +37,8 @@
         "orchestra/testbench": "^9.0 || ^10.0",
         "pestphp/pest": "^3.0",
         "pestphp/pest-plugin-laravel": "^3.0",
-        "phpunit/phpunit": "^11.0"
+        "phpunit/phpunit": "^11.0",
+        "phpstan/phpstan": "^2.1"
     },
     "config": {
         "allow-plugins": {

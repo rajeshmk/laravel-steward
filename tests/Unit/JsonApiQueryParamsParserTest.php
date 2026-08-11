@@ -88,6 +88,14 @@ test('it throws when jsonapi uses top level size', function (): void {
     ]))->toThrow(ValidationException::class);
 });
 
+test('it throws when jsonapi uses a top level cursor', function (): void {
+    $parser = new JsonApiQueryParamsParser();
+
+    expect(fn (): mixed => $parser->parse([
+        'cursor' => 'opaque-cursor',
+    ]))->toThrow(ValidationException::class);
+});
+
 test('it throws when jsonapi sort is not a string', function (): void {
     $parser = new JsonApiQueryParamsParser();
 
