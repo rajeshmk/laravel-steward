@@ -109,7 +109,7 @@ abstract class UpdateModelAction extends AbstractModelAction
 
             $status = $model->save();
         } catch (Throwable $exception) {
-            throw new UpdateModelException(message: $exception->getMessage(), code: $exception->getCode(), previous: $exception);
+            throw new UpdateModelException(message: $exception->getMessage(), previous: $exception);
         }
 
         if ($status === false) {

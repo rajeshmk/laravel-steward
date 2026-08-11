@@ -32,7 +32,7 @@ abstract class CreateModelAction extends AbstractModelAction
 
                 $status = $model->save();
             } catch (Throwable $exception) {
-                throw new CreateModelException(message: $exception->getMessage(), code: $exception->getCode(), previous: $exception);
+                throw new CreateModelException(message: $exception->getMessage(), previous: $exception);
             }
 
             if ($status === false) {
