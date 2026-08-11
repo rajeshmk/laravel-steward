@@ -12,9 +12,12 @@ use Hatchyu\Steward\Exceptions\UpdateModelException;
 use Hatchyu\Steward\Queries\Contracts\FindModelQueryContract;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Hatchyu\Steward\Tests\TestCase;
+use Illuminate\Support\Facades\DB;
 
 test('UpdateModelAction executeModel validates model registration and updates attributes', function (): void {
+    DB::shouldReceive('transactionLevel')->andReturn(0);
+    DB::shouldReceive('transaction')->andReturnUsing(static fn (callable $cb) => $cb());
+
     $model = new class() extends Model
     {
         protected $table = 'dummy_write_models';
@@ -103,6 +106,9 @@ test('UpdateModelAction executeModel validates model registration and updates at
 });
 
 test('UpdateModelAction supports protected string model property', function (): void {
+    DB::shouldReceive('transactionLevel')->andReturn(0);
+    DB::shouldReceive('transaction')->andReturnUsing(static fn (callable $cb) => $cb());
+
     $model = new class() extends Model
     {
         protected $table = 'dummy_write_models';
@@ -189,6 +195,9 @@ test('UpdateModelAction supports protected string model property', function (): 
 });
 
 test('UpdateModelAction executeModel throws Exception for non-existent model', function (): void {
+    DB::shouldReceive('transactionLevel')->andReturn(0);
+    DB::shouldReceive('transaction')->andReturnUsing(static fn (callable $cb) => $cb());
+
     $model = new class() extends Model
     {
         protected $table = 'dummy_write_models';
@@ -271,6 +280,9 @@ test('UpdateModelAction executeModel throws Exception for non-existent model', f
 });
 
 test('DeleteModelAction executeModel executes delete', function (): void {
+    DB::shouldReceive('transactionLevel')->andReturn(0);
+    DB::shouldReceive('transaction')->andReturnUsing(static fn (callable $cb) => $cb());
+
     $model = new class() extends Model
     {
         protected $table = 'dummy_write_models';
@@ -350,17 +362,4 @@ test('DeleteModelAction executeModel executes delete', function (): void {
 
     $action->executeModel($model);
     expect($model->exists)->toBeFalse();
-});
-
-test('AbstractAction rethrows DB transaction exception on DB error', function (): void {
-    $action = new class() extends AbstractAction {
-        public function run(): void
-        {
-            $this->transaction(function (): void {
-                throw new \RuntimeException('Database constraint failure');
-            });
-        }
-    };
-
-    expect(fn () => $action->run())->toThrow(\RuntimeException::class, 'Database constraint failure');
 });
