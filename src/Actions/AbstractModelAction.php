@@ -6,6 +6,7 @@ namespace Hatchyu\Steward\Actions;
 
 use Hatchyu\Steward\Data\AbstractData;
 use Illuminate\Database\Eloquent\Model;
+use LogicException;
 
 /**
  * @template TModel of Model
@@ -14,9 +15,26 @@ use Illuminate\Database\Eloquent\Model;
 abstract class AbstractModelAction extends AbstractAction
 {
     /**
+     * The Eloquent model class string.
+     *
+     * @var class-string<TModel>|null
+     */
+    protected ?string $model = null;
+
+    /**
      * @return TModel
      */
-    abstract public function model(): Model;
+    public function model(): Model
+    {
+        if ($this->model !== null) {
+            return new $this->model();
+        }
+
+        throw new LogicException(sprintf(
+            'Action [%s] must define protected string $model or override the model() method.',
+            static::class
+        ));
+    }
 
     /**
      * @return TModel
