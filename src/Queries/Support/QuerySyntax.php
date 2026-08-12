@@ -26,4 +26,27 @@ final class QuerySyntax
     {
         return is_string($value) && preg_match(self::PATTERN_RESOURCE_TYPE, $value) === 1;
     }
+
+    public static function isJsonPayloadString(mixed $value): bool
+    {
+        if (! is_string($value)) {
+            return false;
+        }
+
+        $trimmed = trim($value);
+
+        return str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[');
+    }
+
+    public static function tryDecodeJson(mixed $value): mixed
+    {
+        if (self::isJsonPayloadString($value)) {
+            $trimmed = trim((string) $value);
+            if (json_validate($trimmed)) {
+                return json_decode($trimmed, true);
+            }
+        }
+
+        return $value;
+    }
 }

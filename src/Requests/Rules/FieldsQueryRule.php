@@ -19,15 +19,7 @@ final readonly class FieldsQueryRule implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (is_string($value)) {
-            $trimmed = trim($value);
-            if (str_starts_with($trimmed, '{')) {
-                $decoded = json_decode($trimmed, true);
-                if (is_array($decoded)) {
-                    $value = $decoded;
-                }
-            }
-        }
+        $value = QuerySyntax::tryDecodeJson($value);
 
         if (! is_array($value)) {
             $fail('The fields parameter must be an object keyed by resource type.');

@@ -19,20 +19,12 @@ final readonly class IncludeQueryRule implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        $value = QuerySyntax::tryDecodeJson($value);
+
         if (! is_string($value) && ! is_array($value)) {
             $fail('The include must be a comma-separated string or array.');
 
             return;
-        }
-
-        if (is_string($value)) {
-            $trimmed = trim($value);
-            if (str_starts_with($trimmed, '[')) {
-                $decoded = json_decode($trimmed, true);
-                if (is_array($decoded)) {
-                    $value = $decoded;
-                }
-            }
         }
 
         $includes = is_array($value)

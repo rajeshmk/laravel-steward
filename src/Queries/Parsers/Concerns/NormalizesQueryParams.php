@@ -12,17 +12,15 @@ trait NormalizesQueryParams
 {
     private function decodeJsonIfString(mixed $value, string $paramName): mixed
     {
-        if (is_string($value)) {
-            $trimmed = trim($value);
-            if (str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[')) {
-                if (! json_validate($trimmed)) {
-                    throw ValidationException::withMessages([
-                        $paramName => sprintf('The %s parameter contains an invalid JSON string.', $paramName),
-                    ]);
-                }
-
-                return json_decode($trimmed, true);
+        if (QuerySyntax::isJsonPayloadString($value)) {
+            $trimmed = trim((string) $value);
+            if (! json_validate($trimmed)) {
+                throw ValidationException::withMessages([
+                    $paramName => sprintf('The %s parameter contains an invalid JSON string.', $paramName),
+                ]);
             }
+
+            return json_decode($trimmed, true);
         }
 
         return $value;
