@@ -10,6 +10,7 @@ use Hatchyu\Steward\Queries\Parsers\AutoQueryParamsParser;
 use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
 use Hatchyu\Steward\Queries\Parsers\JsonApiQueryParamsParser;
 use Hatchyu\Steward\Queries\Processors\DefaultQueryParamsProcessor;
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Illuminate\Support\ServiceProvider;
 use Override;
 
@@ -23,14 +24,16 @@ final class StewardServiceProvider extends ServiceProvider
             'steward'
         );
         $this->app->singleton(
+            QueryParamLimits::class,
+            static fn (): QueryParamLimits => QueryParamLimits::fromConfig(),
+        );
+        $this->app->singleton(
             QueryParamsParserContract::class,
             function (): QueryParamsParserContract {
-                $defaultSize = (int) config('steward.default_page_size', 15);
-                $maxSize = (int) config('steward.max_page_size', 100);
-
+                $limits = resolve(QueryParamLimits::class);
                 return new AutoQueryParamsParser(
-                    defaultParser: new DefaultQueryParamsParser($defaultSize, $maxSize),
-                    jsonApiParser: new JsonApiQueryParamsParser($defaultSize, $maxSize),
+                    defaultParser: new DefaultQueryParamsParser($limits),
+                    jsonApiParser: new JsonApiQueryParamsParser($limits),
                 );
             }
         );

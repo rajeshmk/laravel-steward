@@ -79,7 +79,7 @@ final class QuerySyntax
         $result = [];
 
         foreach ($value as $item) {
-            if (! is_scalar($item) || $item === null) {
+            if (! is_scalar($item)) {
                 return null;
             }
 

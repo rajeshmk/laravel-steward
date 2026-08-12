@@ -120,9 +120,11 @@ Notes:
 | `sort` | `string\|array` | Comma-separated: `?sort=-created_at,name`<br>JSON array: `?sort=["-created_at","name"]` | Comma-separated string, array list, or JSON array string. Prefix `-` denotes descending order (`desc`). |
 | `include` | `string` | `?include=addresses,orders.items` | Comma-separated list of relationship inclusion paths. |
 | `fields` | `array\|string` | Bracket object: `?fields[customers]=name,email`<br>JSON object: `?fields={"customers":["name","email"]}` | Object keyed by JSON:API resource type specifying sparse fieldsets. Supports bracket syntax or JSON object strings. |
-| `page` | `array\|string\|integer` | Plain: `?page=2&size=25`<br>JSON:API: `?page[number]=2&page[size]=25`<br>JSON object: `?page={"number":2,"size":25}` | Offset or cursor pagination parameters. Supports plain scalar, bracket syntax, or JSON object strings. |
+| `page` | `array\|string\|integer` | Plain: `?page=2&size=25`<br>JSON:API: `?page[number]=2&page[size]=25`<br>JSON object: `?page={"number":2,"size":25}` | Page-number or cursor pagination. JSON:API requests require the page-object form. |
 | `page[cursor]` | `string` | `?page[cursor]=eyJpZCI6MTB9` | Cursor token string for cursor-based pagination. |
 | `size` | `integer` | `?size=25` | Top-level fallback parameter for page size. |
+
+Pagination and request-complexity limits are configured in `steward.php`. Defaults cap page size at 100, page number at 10,000, filter fields and sort fields at 20, values per filter at 100, includes at 20, requested sparse fields at 100, and individual query values at 2,048 bytes. Invalid or oversized values are rejected with validation errors; they are never silently ignored or clamped.
 
 Convert a request into normalized query params:
 

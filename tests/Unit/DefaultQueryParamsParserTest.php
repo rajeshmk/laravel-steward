@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Illuminate\Validation\ValidationException;
 use Hatchyu\Steward\Tests\TestCase;
 
@@ -100,4 +101,58 @@ test('it throws when sort array has invalid entry type', function (): void {
     expect(fn (): mixed => $parser->parse([
         'sort' => [['name' => 'asc']],
     ]))->toThrow(ValidationException::class);
+});
+
+test('it rejects unsupported pagination keys instead of silently ignoring them', function (): void {
+    $parser = new DefaultQueryParamsParser();
+
+    expect(fn (): mixed => $parser->parse([
+        'page' => ['offset' => 10],
+    ]))->toThrow(ValidationException::class);
+});
+
+test('it rejects invalid cursor values instead of silently discarding them', function (): void {
+    $parser = new DefaultQueryParamsParser();
+
+    expect(fn (): mixed => $parser->parse([
+        'page' => ['cursor' => ['invalid']],
+    ]))->toThrow(ValidationException::class);
+});
+
+test('it rejects non-string filter search values instead of silently ignoring them', function (): void {
+    $parser = new DefaultQueryParamsParser();
+
+    expect(fn (): mixed => $parser->parse([
+        'filter' => ['search' => 12],
+    ]))->toThrow(ValidationException::class);
+});
+
+test('it enforces configured query complexity limits', function (): void {
+    $parser = new DefaultQueryParamsParser(new QueryParamLimits(
+        maxFilterFields: 1,
+        maxFilterValues: 2,
+        maxIncludes: 1,
+        maxFields: 1,
+        maxSortFields: 1,
+        maxValueLength: 100,
+    ));
+
+    expect(fn (): mixed => $parser->parse(['filter' => ['one' => 1, 'two' => 2]]))
+        ->toThrow(ValidationException::class)
+        ->and(fn (): mixed => $parser->parse(['filter' => ['one' => [1, 2, 3]]]))
+        ->toThrow(ValidationException::class)
+        ->and(fn (): mixed => $parser->parse(['include' => 'one,two']))
+        ->toThrow(ValidationException::class)
+        ->and(fn (): mixed => $parser->parse(['fields' => ['users' => 'name,email']]))
+        ->toThrow(ValidationException::class)
+        ->and(fn (): mixed => $parser->parse(['sort' => 'name,email']))
+        ->toThrow(ValidationException::class)
+        ->toThrow(ValidationException::class);
+});
+
+test('it rejects overly long query values before parsing them', function (): void {
+    $parser = new DefaultQueryParamsParser(new QueryParamLimits(maxValueLength: 5));
+
+    expect(fn (): mixed => $parser->parse(['search' => 'longer']))
+        ->toThrow(ValidationException::class);
 });

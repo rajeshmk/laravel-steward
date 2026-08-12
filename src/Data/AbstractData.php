@@ -26,6 +26,7 @@ abstract class AbstractData
      */
     private static array $enumBackingTypeCache = [];
 
+    /** @param array<string, mixed> $attributes */
     public static function fromArray(array $attributes): static
     {
         $args = [];
@@ -62,6 +63,7 @@ abstract class AbstractData
         return (new ReflectionClass(static::class))->newInstanceArgs($args);
     }
 
+    /** @return array<string, mixed> */
     public function toArray(): array
     {
         $payload = [];
@@ -73,18 +75,13 @@ abstract class AbstractData
         return $payload;
     }
 
+    /** @return array<string, mixed> */
     public function toModelAttributes(): array
     {
         $attributes = $this->toArray();
         $normalized = [];
 
         foreach ($attributes as $key => $value) {
-            if (is_int($key)) {
-                $normalized[$key] = $value;
-
-                continue;
-            }
-
             $normalized[self::toSnakeCase($key)] = $value;
         }
 

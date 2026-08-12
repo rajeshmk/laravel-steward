@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 trait NormalizesQueryParams
 {
-    private function decodeJsonIfString(mixed $value, string $paramName): mixed
+    protected function decodeJsonIfString(mixed $value, string $paramName): mixed
     {
         if (QuerySyntax::isJsonPayloadString($value)) {
             $trimmed = trim((string) $value);
@@ -63,7 +63,7 @@ trait NormalizesQueryParams
         $isDesc = str_starts_with($token, '-');
         $field = $isDesc ? substr($token, 1) : $token;
 
-        if (! is_string($field) || trim($field) === '' || ! QuerySyntax::isValidDotIdentifier(trim($field))) {
+        if (trim($field) === '' || ! QuerySyntax::isValidDotIdentifier(trim($field))) {
             throw ValidationException::withMessages([
                 'sort' => sprintf('Invalid sort field: %s.', $field),
             ]);
@@ -75,26 +75,23 @@ trait NormalizesQueryParams
         );
     }
 
-    private function normalizePositiveInt(mixed $value, int $default): int
+    protected function normalizeBoundedPositiveInt(mixed $value, int $default, int $max, string $attribute): int
     {
-        if (is_int($value) && $value > 0) {
-            return $value;
+        if ($value === null) {
+            return $default;
         }
 
-        if (is_string($value) && ctype_digit($value)) {
-            $int = (int) $value;
+        $normalized = is_int($value)
+            ? $value
+            : (is_string($value) && ctype_digit(trim($value)) ? (int) trim($value) : null);
 
-            return $int > 0 ? $int : $default;
+        if ($normalized === null || $normalized < 1 || $normalized > $max) {
+            throw ValidationException::withMessages([
+                $attribute => sprintf('The %s value must be a positive integer not greater than %d.', $attribute, $max),
+            ]);
         }
 
-        return $default;
-    }
-
-    private function normalizeBoundedPageSize(mixed $value, int $defaultSize, int $maxSize): int
-    {
-        $size = $this->normalizePositiveInt($value, $defaultSize);
-
-        return min(max(1, $size), $maxSize);
+        return $normalized;
     }
 
     /**

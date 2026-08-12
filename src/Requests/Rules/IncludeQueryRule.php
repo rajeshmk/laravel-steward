@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Requests\Rules;
 
 use Closure;
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -15,6 +16,7 @@ final readonly class IncludeQueryRule implements ValidationRule
      */
     public function __construct(
         private array $allowedIncludes = [],
+        private QueryParamLimits $limits = new QueryParamLimits(),
     ) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -39,6 +41,12 @@ final readonly class IncludeQueryRule implements ValidationRule
         $includes = QuerySyntax::parseStringList($value);
         if ($includes === null) {
             $fail('The include parameter contains invalid element types.');
+
+            return;
+        }
+
+        if (count($includes) > $this->limits->maxIncludes) {
+            $fail(sprintf('At most %d include paths are allowed.', $this->limits->maxIncludes));
 
             return;
         }

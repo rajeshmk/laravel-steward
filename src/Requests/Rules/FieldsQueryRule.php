@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Requests\Rules;
 
 use Closure;
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -15,6 +16,7 @@ final readonly class FieldsQueryRule implements ValidationRule
      */
     public function __construct(
         private array $allowedFields = [],
+        private QueryParamLimits $limits = new QueryParamLimits(),
     ) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
@@ -42,6 +44,8 @@ final readonly class FieldsQueryRule implements ValidationRule
             return;
         }
 
+        $fieldCount = 0;
+
         foreach ($value as $type => $fieldSet) {
             if (! is_string($type) || ! QuerySyntax::isValidResourceType((string) $type)) {
                 $fail(sprintf('Invalid resource type for fields: %s.', (string) $type));
@@ -66,6 +70,13 @@ final readonly class FieldsQueryRule implements ValidationRule
                 $fail(sprintf('The fields set for %s contains invalid element types.', (string) $type));
 
                 continue;
+            }
+
+            $fieldCount += count($fields);
+            if ($fieldCount > $this->limits->maxFields) {
+                $fail(sprintf('At most %d fields are allowed.', $this->limits->maxFields));
+
+                return;
             }
 
             $allowed = $this->allowedFields[(string) $type] ?? null;

@@ -54,7 +54,6 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param array<int, string> $columns
-     *
      * @return Collection<int, Model>
      */
     public function get(array $columns = ['*']): Collection
@@ -64,6 +63,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param array<int, string> $columns
+     * @return LengthAwarePaginator<int, Model>
      */
     public function paginate(
         int $perPage = 15,
@@ -76,6 +76,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param array<int, string> $columns
+     * @return CursorPaginator<int, Model>
      */
     public function cursorPaginate(
         int $perPage = 15,
@@ -91,6 +92,10 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         return new QueryDefinition();
     }
 
+    /**
+     * @param Builder<Model> $query
+     * @return Builder<Model>
+     */
     protected function applyQueryParams(Builder $query, QueryParams $params): Builder
     {
         $definition = $this->definition();
@@ -125,7 +130,9 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     }
 
     /**
+     * @param Builder<Model> $query
      * @param array<int, string> $columns
+     * @return LengthAwarePaginator<int, Model>
      */
     protected function paginateByQueryParams(
         Builder $query,
@@ -137,7 +144,9 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     }
 
     /**
+     * @param Builder<Model> $query
      * @param array<int, string> $columns
+     * @return CursorPaginator<int, Model>
      */
     protected function cursorPaginateByQueryParams(
         Builder $query,
@@ -255,6 +264,10 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         ]);
     }
 
+    /**
+     * @param Builder<Model> $query
+     * @return Builder<Model>
+     */
     private function applyIncludes(Builder $query, QueryParams $params): Builder
     {
         if ($params->includes === []) {
@@ -331,6 +344,10 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         }
     }
 
+    /**
+     * @param Builder<Model> $query
+     * @return Builder<Model>
+     */
     private function applyFieldProjection(Builder $query, QueryParams $params): Builder
     {
         $resource = $this->jsonApiResource();
@@ -423,8 +440,10 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     }
 
     /**
+     * @param Builder<Model> $builder
      * @param class-string<JsonApiResource> $resource
-     * @param list<string>                  $nestedIncludes
+     * @param Relation<Model, Model, mixed> $relation
+     * @param list<string> $nestedIncludes
      */
     private function applyRelatedFieldProjection(
         Builder $builder,
@@ -491,6 +510,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     }
 
     /**
+     * @param Relation<Model, Model, mixed> $relation
      * @return list<string>
      */
     private function incomingRelationColumns(Relation $relation, ?callable $qualifier = null): array
@@ -530,6 +550,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         return $columns;
     }
 
+    /** @return Relation<Model, Model, mixed>|null */
     private function relationForPath(string $path): ?Relation
     {
         $model = $this->model;
@@ -570,6 +591,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         return array_values(array_filter($nested));
     }
 
+    /** @param Builder<Model> $query */
     private function ensureCursorOrderIsUnique(Builder $query): void
     {
         $keyName = $this->model->getKeyName();

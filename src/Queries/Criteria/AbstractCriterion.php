@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Queries\Criteria;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 abstract class AbstractCriterion
 {
@@ -32,6 +33,10 @@ abstract class AbstractCriterion
         return $this->name === $name;
     }
 
+    /**
+     * @param Builder<Model> $query
+     * @return Builder<Model>
+     */
     abstract public function apply(Builder $query, mixed $value): Builder;
 
     /**

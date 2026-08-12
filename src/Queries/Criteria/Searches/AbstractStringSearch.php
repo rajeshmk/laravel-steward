@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Queries\Criteria\Searches;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 abstract class AbstractStringSearch extends AbstractSearch
 {
     protected bool $ignoreEmptyStrings = true;
 
+    /**
+     * @param Builder<Model> $query
+     * @return Builder<Model>
+     */
     public function apply(Builder $query, mixed $value): Builder
     {
         $value = $this->normalizeSearchValue($value);
@@ -42,6 +47,10 @@ abstract class AbstractStringSearch extends AbstractSearch
         );
     }
 
+    /**
+     * @param Builder<Model> $query
+     * @return Builder<Model>
+     */
     protected function applyStringSearch(Builder $query, string $value): Builder
     {
         $escapedValue = $this->escapeLike($value);

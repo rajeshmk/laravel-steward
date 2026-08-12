@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Tests\Unit;
 
 use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Queries\Parsers\JsonApiQueryParamsParser;
 use Hatchyu\Steward\Requests\ListQueryRequest;
 use Illuminate\Validation\ValidationException;
@@ -171,13 +172,12 @@ test('it rejects object provided as a list for include', function (): void {
         ->toThrow(ValidationException::class);
 });
 
-test('it clamps excessive page sizes to maxSize', function (): void {
-    $parser = new DefaultQueryParamsParser(defaultSize: 15, maxSize: 100);
-    $queryParams = $parser->parse([
-        'page' => '{"number":1,"size":1000000}',
-    ]);
+test('it rejects excessive page sizes', function (): void {
+    $parser = new DefaultQueryParamsParser(new QueryParamLimits(defaultPageSize: 15, maxPageSize: 100));
 
-    expect($queryParams->size)->toBe(100);
+    expect(fn (): mixed => $parser->parse([
+        'page' => '{"number":1,"size":1000000}',
+    ]))->toThrow(ValidationException::class);
 });
 
 test('it extracts search term from JSON encoded filter string', function (): void {

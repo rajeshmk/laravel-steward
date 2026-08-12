@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 abstract class AbstractModelQuery extends AbstractQuery
 {
     /**
-     * @var list<Closure(Builder): Builder>
+     * @var list<Closure(Builder<Model>): Builder<Model>>
      */
     private array $constraints = [];
 
@@ -19,6 +19,7 @@ abstract class AbstractModelQuery extends AbstractQuery
         protected readonly Model $model,
     ) {}
 
+    /** @return Builder<Model> */
     protected function query(): Builder
     {
         $query = $this->apply($this->model->query());
@@ -30,6 +31,7 @@ abstract class AbstractModelQuery extends AbstractQuery
         return $query;
     }
 
+    /** @param Closure(Builder<Model>): Builder<Model> $constraint */
     protected function withConstraint(Closure $constraint): static
     {
         $clone = clone $this;
@@ -38,6 +40,10 @@ abstract class AbstractModelQuery extends AbstractQuery
         return $clone;
     }
 
+    /**
+     * @param Builder<Model> $query
+     * @return Builder<Model>
+     */
     protected function apply(Builder $query): Builder
     {
         return $query;

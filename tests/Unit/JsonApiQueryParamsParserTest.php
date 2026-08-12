@@ -119,3 +119,19 @@ test('it throws when jsonapi fields is not an object', function (): void {
         'fields' => 'name,email',
     ]))->toThrow(ValidationException::class);
 });
+
+test('it rejects scalar page values in jsonapi mode', function (): void {
+    $parser = new JsonApiQueryParamsParser();
+
+    expect(fn (): mixed => $parser->parse(['page' => '2']))
+        ->toThrow(ValidationException::class);
+});
+
+test('it rejects jsonapi pagination hybrids', function (): void {
+    $parser = new JsonApiQueryParamsParser();
+
+    expect(fn (): mixed => $parser->parse([
+        'page' => ['number' => 2, 'size' => 25],
+        'size' => 100,
+    ]))->toThrow(ValidationException::class);
+});

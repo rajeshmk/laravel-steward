@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Queries\Criteria\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 final class SimpleFilter extends AbstractFilter
 {
+    /** @param Builder<Model> $query @return Builder<Model> */
     public function apply(Builder $query, mixed $value): Builder
     {
         if (is_string($value) && str_contains($value, ',')) {

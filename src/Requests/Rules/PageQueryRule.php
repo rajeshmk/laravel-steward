@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Requests\Rules;
 
 use Closure;
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 final class PageQueryRule implements ValidationRule
 {
-    public function __construct(
-        private int $maxSize = 100,
-    ) {}
+    public function __construct(private QueryParamLimits $limits = new QueryParamLimits()) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -50,7 +49,7 @@ final class PageQueryRule implements ValidationRule
                 return;
             }
 
-            $allowedKeys = ['number', 'size', 'cursor', 'offset'];
+            $allowedKeys = ['number', 'size', 'cursor'];
             foreach (array_keys($value) as $key) {
                 if (! is_string($key) || ! in_array($key, $allowedKeys, true)) {
                     $fail(sprintf('Unsupported page parameter key: %s.', (string) $key));
@@ -62,8 +61,8 @@ final class PageQueryRule implements ValidationRule
             if (array_key_exists('number', $value)) {
                 $num = $value['number'];
                 $numInt = is_int($num) ? $num : ((is_string($num) && ctype_digit(trim($num))) ? (int) trim($num) : null);
-                if ($numInt === null || $numInt < 1) {
-                    $fail('The page.number must be a positive integer.');
+                if ($numInt === null || $numInt < 1 || $numInt > $this->limits->maxPageNumber) {
+                    $fail(sprintf('The page.number must be a positive integer not greater than %d.', $this->limits->maxPageNumber));
                 }
             }
 
@@ -72,9 +71,13 @@ final class PageQueryRule implements ValidationRule
                 $sizeInt = is_int($size) ? $size : ((is_string($size) && ctype_digit(trim($size))) ? (int) trim($size) : null);
                 if ($sizeInt === null || $sizeInt < 1) {
                     $fail('The page.size must be a positive integer.');
-                } elseif ($sizeInt > $this->maxSize) {
-                    $fail(sprintf('The page.size may not be greater than %d.', $this->maxSize));
+                } elseif ($sizeInt > $this->limits->maxPageSize) {
+                    $fail(sprintf('The page.size may not be greater than %d.', $this->limits->maxPageSize));
                 }
+            }
+
+            if (array_key_exists('cursor', $value) && (! is_string($value['cursor']) || trim($value['cursor']) === '')) {
+                $fail('The page.cursor must be a non-empty string.');
             }
 
             return;

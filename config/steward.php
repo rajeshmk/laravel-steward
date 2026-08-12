@@ -43,4 +43,13 @@ return [
     |
     */
     'max_page_size' => 100,
+
+    // Request-complexity limits. Keep these finite to bound database work.
+    'max_page_number' => 10_000,
+    'max_filter_fields' => 20,
+    'max_filter_values' => 100,
+    'max_includes' => 20,
+    'max_fields' => 100,
+    'max_sort_fields' => 20,
+    'max_value_length' => 2_048,
 ];
