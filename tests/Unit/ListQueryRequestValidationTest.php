@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Hatchyu\Steward\Tests\Unit;
 
+use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
 use Hatchyu\Steward\Queries\Parsers\JsonApiQueryParamsParser;
 use Hatchyu\Steward\Requests\ListQueryRequest;
 use Illuminate\Validation\ValidationException;
@@ -148,6 +149,50 @@ test('it rejects include payload containing invalid element types', function ():
     $request->initialize([
         'include' => '["addresses", {"invalid": true}]',
     ]);
+
+    expect(fn (): array => $request->validateQuery())
+        ->toThrow(ValidationException::class);
+});
+
+test('it rejects object provided as a list for include', function (): void {
+    $request = new class() extends ListQueryRequest
+    {
+        protected function primaryJsonApiResource(): string
+        {
+            return ListQueryRequestValidationTestCustomerResource::class;
+        }
+    };
+
+    $request->initialize([
+        'include' => '{"anything":"addresses"}',
+    ]);
+
+    expect(fn (): array => $request->validateQuery())
+        ->toThrow(ValidationException::class);
+});
+
+test('it clamps excessive page sizes to maxSize', function (): void {
+    $parser = new DefaultQueryParamsParser(defaultSize: 15, maxSize: 100);
+    $queryParams = $parser->parse([
+        'page' => '{"number":1,"size":1000000}',
+    ]);
+
+    expect($queryParams->size)->toBe(100);
+});
+
+test('it extracts search term from JSON encoded filter string', function (): void {
+    $parser = new DefaultQueryParamsParser();
+    $queryParams = $parser->parse([
+        'filter' => '{"search":"john","is_active":true}',
+    ]);
+
+    expect($queryParams->search)->toBe('john');
+    expect($queryParams->filters)->toBe(['is_active' => true]);
+});
+
+test('it rejects non-positive page integers in PageQueryRule', function (): void {
+    $request = new class() extends ListQueryRequest {};
+    $request->initialize(['page' => 0]);
 
     expect(fn (): array => $request->validateQuery())
         ->toThrow(ValidationException::class);

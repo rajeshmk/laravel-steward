@@ -16,6 +16,11 @@ final class DefaultQueryParamsParser implements QueryParamsParserContract
 {
     use NormalizesQueryParams;
 
+    public function __construct(
+        private readonly int $defaultSize = 15,
+        private readonly int $maxSize = 100,
+    ) {}
+
     public function parseRequest(Request $request): QueryParams
     {
         return $this->parse($request->query->all());
@@ -23,6 +28,11 @@ final class DefaultQueryParamsParser implements QueryParamsParserContract
 
     public function parse(array $params): QueryParams
     {
+        $decodedFilter = $this->decodeJsonIfString($params['filter'] ?? null, 'filter');
+        if ($decodedFilter !== null && is_array($decodedFilter)) {
+            $params['filter'] = $decodedFilter;
+        }
+
         return new QueryParams(
             search: $this->extractSearch($params),
             filters: $this->extractFilters($params),
@@ -68,7 +78,7 @@ final class DefaultQueryParamsParser implements QueryParamsParserContract
      */
     private function extractFilters(array $params): array
     {
-        $filters = $this->decodeJsonIfString($params['filter'] ?? null, 'filter');
+        $filters = $params['filter'] ?? null;
         if ($filters === null) {
             return [];
         }
@@ -283,19 +293,17 @@ final class DefaultQueryParamsParser implements QueryParamsParserContract
      */
     private function extractPageSize(array $params): int
     {
-        $defaultSize = (int) config('steward.default_page_size', 15);
-
         if (array_key_exists('size', $params)) {
-            return $this->normalizePositiveInt($params['size'], $defaultSize);
+            return $this->normalizeBoundedPageSize($params['size'], $this->defaultSize, $this->maxSize);
         }
 
         $page = $this->decodeJsonIfString($params['page'] ?? null, 'page');
 
         if (is_array($page) && array_key_exists('size', $page)) {
-            return $this->normalizePositiveInt($page['size'], $defaultSize);
+            return $this->normalizeBoundedPageSize($page['size'], $this->defaultSize, $this->maxSize);
         }
 
-        return $defaultSize;
+        return $this->defaultSize;
     }
 
     /**

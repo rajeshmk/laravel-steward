@@ -10,6 +10,10 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 final class PageQueryRule implements ValidationRule
 {
+    public function __construct(
+        private int $maxSize = 100,
+    ) {}
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (is_string($value) && QuerySyntax::isJsonPayloadString($value)) {
@@ -23,7 +27,19 @@ final class PageQueryRule implements ValidationRule
             $value = json_decode($trimmed, true);
         }
 
-        if (is_int($value) || (is_string($value) && ctype_digit(trim($value)) && (int) trim($value) > 0)) {
+        if (is_int($value)) {
+            if ($value < 1) {
+                $fail('The page must be a positive integer.');
+            }
+
+            return;
+        }
+
+        if (is_string($value) && ctype_digit(trim($value))) {
+            if ((int) trim($value) < 1) {
+                $fail('The page must be a positive integer.');
+            }
+
             return;
         }
 
@@ -45,15 +61,19 @@ final class PageQueryRule implements ValidationRule
 
             if (array_key_exists('number', $value)) {
                 $num = $value['number'];
-                if (! is_int($num) && (! is_string($num) || ! ctype_digit(trim((string) $num)) || (int) trim((string) $num) < 1)) {
+                $numInt = is_int($num) ? $num : ((is_string($num) && ctype_digit(trim($num))) ? (int) trim($num) : null);
+                if ($numInt === null || $numInt < 1) {
                     $fail('The page.number must be a positive integer.');
                 }
             }
 
             if (array_key_exists('size', $value)) {
                 $size = $value['size'];
-                if (! is_int($size) && (! is_string($size) || ! ctype_digit(trim((string) $size)) || (int) trim((string) $size) < 1)) {
+                $sizeInt = is_int($size) ? $size : ((is_string($size) && ctype_digit(trim($size))) ? (int) trim($size) : null);
+                if ($sizeInt === null || $sizeInt < 1) {
                     $fail('The page.size must be a positive integer.');
+                } elseif ($sizeInt > $this->maxSize) {
+                    $fail(sprintf('The page.size may not be greater than %d.', $this->maxSize));
                 }
             }
 

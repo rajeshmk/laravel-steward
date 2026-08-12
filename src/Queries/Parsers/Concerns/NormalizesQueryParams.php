@@ -90,6 +90,13 @@ trait NormalizesQueryParams
         return $default;
     }
 
+    private function normalizeBoundedPageSize(mixed $value, int $defaultSize, int $maxSize): int
+    {
+        $size = $this->normalizePositiveInt($value, $defaultSize);
+
+        return min(max(1, $size), $maxSize);
+    }
+
     /**
      * Normalize 'true'/'false' strings to booleans (from query string or JSON).
      *

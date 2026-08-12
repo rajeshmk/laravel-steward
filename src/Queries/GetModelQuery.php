@@ -158,7 +158,6 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         return null;
     }
 
-    #[Override]
     protected function primaryJsonApiResource(): ?string
     {
         return $this->jsonApiResource();

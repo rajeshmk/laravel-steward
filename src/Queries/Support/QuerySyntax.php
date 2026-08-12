@@ -59,8 +59,8 @@ final class QuerySyntax
     }
 
     /**
-     * Normalizes a comma-separated string, JSON array string, or PHP array into a list of trimmed non-empty strings.
-     * Returns null if any list element is an array, object, or invalid non-scalar.
+     * Normalizes a comma-separated string, JSON array string, or PHP list array into a list of trimmed non-empty strings.
+     * Returns null if value is an associative object, contains non-scalars, or nulls.
      *
      * @return list<string>|null
      */
@@ -72,18 +72,14 @@ final class QuerySyntax
             $value = explode(',', $value);
         }
 
-        if (! is_array($value)) {
+        if (! is_array($value) || ($value !== [] && ! array_is_list($value))) {
             return null;
         }
 
         $result = [];
 
         foreach ($value as $item) {
-            if (! is_scalar($item) && $item !== null) {
-                return null;
-            }
-
-            if ($item === null) {
+            if (! is_scalar($item) || $item === null) {
                 return null;
             }
 
