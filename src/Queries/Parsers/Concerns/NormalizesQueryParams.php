@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Hatchyu\Steward\Queries\Parsers\Concerns;
 
+use Hatchyu\Steward\Queries\Params\SortField;
 use Illuminate\Validation\ValidationException;
 
 trait NormalizesQueryParams
@@ -57,6 +58,39 @@ trait NormalizesQueryParams
         }
 
         return array_values(array_unique($result));
+    }
+
+    /**
+     * @return list<SortField>
+     */
+    private function parseSortString(string $sort): array
+    {
+        if (trim($sort) === '') {
+            return [];
+        }
+
+        return array_values(array_map(
+            $this->parseSortToken(...),
+            array_filter(array_map(trim(...), explode(',', $sort)))
+        ));
+    }
+
+    private function parseSortToken(string $token): SortField
+    {
+        $token = trim($token);
+        $isDesc = str_starts_with($token, '-');
+        $field = $isDesc ? substr($token, 1) : $token;
+
+        if (! is_string($field) || trim($field) === '' || ! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', trim($field))) {
+            throw ValidationException::withMessages([
+                'sort' => sprintf('Invalid sort field: %s.', $field),
+            ]);
+        }
+
+        return new SortField(
+            field: trim($field),
+            direction: $isDesc ? 'desc' : 'asc'
+        );
     }
 
     private function normalizePositiveInt(mixed $value, int $default): int

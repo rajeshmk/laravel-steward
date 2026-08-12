@@ -18,6 +18,16 @@ final readonly class FieldsQueryRule implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if (str_starts_with($trimmed, '{')) {
+                $decoded = json_decode($trimmed, true);
+                if (is_array($decoded)) {
+                    $value = $decoded;
+                }
+            }
+        }
+
         if (! is_array($value)) {
             $fail('The fields parameter must be an object keyed by resource type.');
 
@@ -37,32 +47,33 @@ final readonly class FieldsQueryRule implements ValidationRule
                 continue;
             }
 
-            if (! is_string($fieldSet)) {
-                $fail(sprintf('The fields set for %s must be a comma-separated string.', $type));
+            if (! is_string($fieldSet) && ! is_array($fieldSet)) {
+                $fail(sprintf('The fields set for %s must be a string or list of strings.', (string) $type));
 
                 continue;
             }
 
             if (! array_key_exists($type, $this->allowedFields)) {
-                $fail(sprintf('Unsupported fields type: %s.', $type));
+                $fail(sprintf('Unsupported fields type: %s.', (string) $type));
 
                 continue;
             }
 
-            $fields = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
-            $allowed = array_key_exists($type, $this->allowedFields)
-                ? $this->allowedFields[$type]
-                : null;
+            $fields = is_array($fieldSet)
+                ? array_values(array_filter(array_map(static fn (mixed $f): string => trim((string) $f), $fieldSet)))
+                : array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
+
+            $allowed = $this->allowedFields[(string) $type] ?? null;
 
             foreach ($fields as $field) {
                 if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $field)) {
-                    $fail(sprintf('Invalid field name for %s: %s.', $type, $field));
+                    $fail(sprintf('Invalid field name for %s: %s.', (string) $type, $field));
 
                     continue;
                 }
 
                 if (is_array($allowed) && ! in_array($field, $allowed, true)) {
-                    $fail(sprintf('Unsupported field for %s: %s.', $type, $field));
+                    $fail(sprintf('Unsupported field for %s: %s.', (string) $type, $field));
                 }
             }
         }
