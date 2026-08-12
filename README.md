@@ -108,7 +108,7 @@ Notes:
 | Parameter | Type | Format / Example | Description |
 | :--- | :--- | :--- | :--- |
 | `search` | `string` | `?search=john` | Free-text search string. In JSON:API format, `?filter[search]=john` is also supported. |
-| `filter` | `array\|string` | `?filter[status]=active` or `?filter={"status":"active"}` | Array or JSON object string of field filtering criteria. |
+| `filter` | `array\|string` | `?filter[status]=active` or `?filter[id]=1,2,3,4,5` | Filter criteria. Supports single values, arrays (`filter[id][]=1`), comma-separated list (`filter[id]=1,2,3`), or JSON strings. |
 | `sort` | `string\|array` | `?sort=-created_at,name` | Comma-separated string or array. Prefix `-` denotes descending order (`desc`). |
 | `include` | `string` | `?include=addresses,orders.items` | Comma-separated list of relationship inclusion paths. |
 | `fields` | `array` | `?fields[customers]=name,email` | Object keyed by JSON:API resource type specifying sparse fieldsets. |
