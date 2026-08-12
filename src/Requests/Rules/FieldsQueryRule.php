@@ -11,29 +11,47 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 final readonly class FieldsQueryRule implements ValidationRule
 {
+    private QueryParamLimits $limits;
+
     /**
      * @param array<string, list<string>> $allowedFields
      */
     public function __construct(
         private array $allowedFields = [],
-        private QueryParamLimits $limits = new QueryParamLimits(),
-    ) {}
+        ?QueryParamLimits $limits = null,
+    ) {
+        $this->limits = $limits ?? QueryParamLimits::fromConfig();
+    }
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (is_string($value) && QuerySyntax::isJsonPayloadString($value)) {
-            $trimmed = trim($value);
-            if (! json_validate($trimmed)) {
-                $fail('The fields parameter contains an invalid JSON string.');
+        if (is_string($value)) {
+            if (mb_strlen($value) > $this->limits->maxValueLength) {
+                $fail(sprintf('The fields parameter value exceeds the maximum allowed length of %d characters.', $this->limits->maxValueLength));
 
                 return;
             }
 
-            $value = json_decode($trimmed, true);
+            if (QuerySyntax::isJsonPayloadString($value)) {
+                $trimmed = trim($value);
+                if (! json_validate($trimmed)) {
+                    $fail('The fields parameter contains an invalid JSON string.');
+
+                    return;
+                }
+
+                $value = json_decode($trimmed, true);
+            }
         }
 
         if (! is_array($value) || ! QuerySyntax::isAssociativeArray($value)) {
             $fail('The fields parameter must be an object keyed by resource type.');
+
+            return;
+        }
+
+        if (count($value) > $this->limits->maxFieldsets) {
+            $fail(sprintf('At most %d resource fieldsets are allowed.', $this->limits->maxFieldsets));
 
             return;
         }

@@ -479,3 +479,41 @@ test('UpdateModelAction retains persistence errors as previous exceptions withou
 
     throw new RuntimeException('Expected UpdateModelException was not thrown.');
 });
+
+test('AbstractAction delegates unconditionally to DB::transaction callback', function (): void {
+    $called = false;
+    DB::shouldReceive('transaction')->once()->andReturnUsing(static function (callable $callback) use (&$called) {
+        $called = true;
+
+        return $callback();
+    });
+
+    $action = new class() extends AbstractAction {
+        public function run(): bool
+        {
+            return $this->transaction(static fn (): bool => true);
+        }
+    };
+
+    expect($action->run())->toBeTrue();
+    expect($called)->toBeTrue();
+});
+
+test('AbstractAction delegates to DB::afterCommit for post-transaction callbacks', function (): void {
+    $called = false;
+    DB::shouldReceive('afterCommit')->once()->andReturnUsing(static function (callable $callback) use (&$called) {
+        $called = true;
+
+        $callback();
+    });
+
+    $action = new class() extends AbstractAction {
+        public function runAfterCommit(callable $cb): void
+        {
+            $this->afterCommit($cb);
+        }
+    };
+
+    $action->runAfterCommit(static function (): void {});
+    expect($called)->toBeTrue();
+});

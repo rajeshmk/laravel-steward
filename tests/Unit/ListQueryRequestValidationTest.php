@@ -216,3 +216,37 @@ test('it parses JSON string query params in JsonApiQueryParamsParser with parity
     expect($queryParams->page)->toBe(2);
     expect($queryParams->size)->toBe(25);
 });
+
+test('it validates request query parameters from JSON:API data.attributes request body', function (): void {
+    $request = new class() extends ListQueryRequest
+    {
+        protected function primaryJsonApiResource(): string
+        {
+            return ListQueryRequestValidationTestCustomerResource::class;
+        }
+    };
+
+    $request->replace([
+        'data' => [
+            'type' => 'customers',
+            'attributes' => [
+                'include' => 'addresses',
+                'sort' => '-created_at',
+            ],
+        ],
+    ]);
+
+    $queryParams = $request->toQueryParams();
+
+    expect($queryParams->includes)->toBe(['addresses']);
+    expect($queryParams->sort)->toHaveCount(1);
+    expect($queryParams->sort[0]->field)->toBe('created_at');
+});
+
+test('it rejects scalar page number exceeding maxPageNumber in PageQueryRule', function (): void {
+    $request = new class() extends ListQueryRequest {};
+    $request->initialize(['page' => 1000000]);
+
+    expect(fn (): array => $request->validateQuery())
+        ->toThrow(ValidationException::class);
+});

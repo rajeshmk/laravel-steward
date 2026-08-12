@@ -3,23 +3,14 @@
 declare(strict_types=1);
 
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | Default sort column
-    |--------------------------------------------------------------------------
-    |
-    | Column used for default ordering when no sort is specified in the request.
-    | Set to null to use the model's primary key.
-    |
-    */
-    'default_sort_column' => null,
 
     /*
     |--------------------------------------------------------------------------
-    | Default sort direction
+    | Default Sort Direction
     |--------------------------------------------------------------------------
     |
-    | Direction for default ordering: 'asc' or 'desc'.
+    | Default sort direction when no sort parameter is specified.
+    | Options: 'asc', 'desc'
     |
     */
     'default_sort_direction' => 'desc',
@@ -45,11 +36,12 @@ return [
     'max_page_size' => 100,
 
     // Request-complexity limits. Keep these finite to bound database work.
-    'max_page_number' => 10_000,
+    'max_page_number' => 10000,
     'max_filter_fields' => 20,
     'max_filter_values' => 100,
     'max_includes' => 20,
+    'max_fieldsets' => 20,
     'max_fields' => 100,
     'max_sort_fields' => 20,
-    'max_value_length' => 2_048,
+    'max_value_length' => 2048,
 ];

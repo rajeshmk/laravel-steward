@@ -198,6 +198,10 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
             throw ValidationException::withMessages(['fields' => 'The fields parameter must be an object keyed by resource type.']);
         }
 
+        if (count($fields) > $this->limits->maxFieldsets) {
+            throw ValidationException::withMessages(['fields' => sprintf('At most %d resource fieldsets are allowed.', $this->limits->maxFieldsets)]);
+        }
+
         $result = [];
         foreach ($fields as $type => $fieldSet) {
             if (! is_string($type) || ! QuerySyntax::isValidResourceType($type)) {
@@ -253,8 +257,8 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
     private function assertParameterStringLengths(array $value): void
     {
         foreach ($value as $item) {
-            if (is_string($item) && strlen($item) > $this->limits->maxValueLength) {
-                throw ValidationException::withMessages(['query' => sprintf('Query parameter values may not exceed %d bytes.', $this->limits->maxValueLength)]);
+            if (is_string($item)) {
+                $this->limits->assertValueLength('query', $item);
             }
 
             if (is_array($item)) {

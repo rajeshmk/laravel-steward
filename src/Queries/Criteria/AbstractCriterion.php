@@ -38,13 +38,4 @@ abstract class AbstractCriterion
      * @return Builder<Model>
      */
     abstract public function apply(Builder $query, mixed $value): Builder;
-
-    /**
-     * Wrap a field name for use in raw expressions (e.g. reserved words).
-     * Override in subclasses if your driver uses different identifier quotes.
-     */
-    protected function wrapField(string $field): string
-    {
-        return '`' . str_replace('.', '`.`', $field) . '`';
-    }
 }

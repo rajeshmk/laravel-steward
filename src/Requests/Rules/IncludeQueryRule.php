@@ -11,25 +11,37 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 final readonly class IncludeQueryRule implements ValidationRule
 {
+    private QueryParamLimits $limits;
+
     /**
      * @param list<string> $allowedIncludes
      */
     public function __construct(
         private array $allowedIncludes = [],
-        private QueryParamLimits $limits = new QueryParamLimits(),
-    ) {}
+        ?QueryParamLimits $limits = null,
+    ) {
+        $this->limits = $limits ?? QueryParamLimits::fromConfig();
+    }
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (is_string($value) && QuerySyntax::isJsonPayloadString($value)) {
-            $trimmed = trim($value);
-            if (! json_validate($trimmed)) {
-                $fail('The include parameter contains an invalid JSON string.');
+        if (is_string($value)) {
+            if (mb_strlen($value) > $this->limits->maxValueLength) {
+                $fail(sprintf('The include parameter value exceeds the maximum allowed length of %d characters.', $this->limits->maxValueLength));
 
                 return;
             }
 
-            $value = json_decode($trimmed, true);
+            if (QuerySyntax::isJsonPayloadString($value)) {
+                $trimmed = trim($value);
+                if (! json_validate($trimmed)) {
+                    $fail('The include parameter contains an invalid JSON string.');
+
+                    return;
+                }
+
+                $value = json_decode($trimmed, true);
+            }
         }
 
         if (! is_string($value) && ! is_array($value)) {

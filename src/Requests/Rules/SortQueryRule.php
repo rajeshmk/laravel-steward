@@ -5,22 +5,38 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Requests\Rules;
 
 use Closure;
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 final class SortQueryRule implements ValidationRule
 {
+    private QueryParamLimits $limits;
+
+    public function __construct(?QueryParamLimits $limits = null)
+    {
+        $this->limits = $limits ?? QueryParamLimits::fromConfig();
+    }
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (is_string($value) && QuerySyntax::isJsonPayloadString($value)) {
-            $trimmed = trim($value);
-            if (! json_validate($trimmed)) {
-                $fail('The sort parameter contains an invalid JSON string.');
+        if (is_string($value)) {
+            if (mb_strlen($value) > $this->limits->maxValueLength) {
+                $fail(sprintf('The sort parameter value exceeds the maximum allowed length of %d characters.', $this->limits->maxValueLength));
 
                 return;
             }
 
-            $value = json_decode($trimmed, true);
+            if (QuerySyntax::isJsonPayloadString($value)) {
+                $trimmed = trim($value);
+                if (! json_validate($trimmed)) {
+                    $fail('The sort parameter contains an invalid JSON string.');
+
+                    return;
+                }
+
+                $value = json_decode($trimmed, true);
+            }
         }
 
         if (is_string($value)) {
@@ -47,6 +63,12 @@ final class SortQueryRule implements ValidationRule
             return;
         }
 
+        if (count($tokens) > $this->limits->maxSortFields) {
+            $fail(sprintf('At most %d sort fields are allowed.', $this->limits->maxSortFields));
+
+            return;
+        }
+
         foreach ($tokens as $token) {
             $field = ltrim($token, '-');
 
@@ -61,6 +83,12 @@ final class SortQueryRule implements ValidationRule
      */
     private function validateSortArray(array $sort, Closure $fail): void
     {
+        if (count($sort) > $this->limits->maxSortFields) {
+            $fail(sprintf('At most %d sort fields are allowed.', $this->limits->maxSortFields));
+
+            return;
+        }
+
         foreach ($sort as $key => $value) {
             if (is_int($key) && is_string($value)) {
                 $field = ltrim(trim($value), '-');

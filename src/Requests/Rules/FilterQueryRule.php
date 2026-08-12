@@ -14,19 +14,32 @@ final class FilterQueryRule implements ValidationRule
 {
     use NormalizesQueryParams;
 
-    public function __construct(private QueryParamLimits $limits = new QueryParamLimits()) {}
+    private QueryParamLimits $limits;
+
+    public function __construct(?QueryParamLimits $limits = null)
+    {
+        $this->limits = $limits ?? QueryParamLimits::fromConfig();
+    }
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (is_string($value) && QuerySyntax::isJsonPayloadString($value)) {
-            $trimmed = trim($value);
-            if (! json_validate($trimmed)) {
-                $fail('The filter parameter contains an invalid JSON string.');
+        if (is_string($value)) {
+            if (mb_strlen($value) > $this->limits->maxValueLength) {
+                $fail(sprintf('The filter parameter value exceeds the maximum allowed length of %d characters.', $this->limits->maxValueLength));
 
                 return;
             }
 
-            $value = json_decode($trimmed, true);
+            if (QuerySyntax::isJsonPayloadString($value)) {
+                $trimmed = trim($value);
+                if (! json_validate($trimmed)) {
+                    $fail('The filter parameter contains an invalid JSON string.');
+
+                    return;
+                }
+
+                $value = json_decode($trimmed, true);
+            }
         }
 
         if (! is_array($value) || ! QuerySyntax::isAssociativeArray($value)) {

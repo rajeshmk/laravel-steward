@@ -10,10 +10,14 @@ abstract class AbstractAction
 {
     protected function transaction(callable $callback): mixed
     {
-        if (DB::transactionLevel() > 0) {
-            return $callback();
-        }
-
         return DB::transaction($callback);
+    }
+
+    /**
+     * Register a callback to execute after the active database transaction successfully commits.
+     */
+    protected function afterCommit(callable $callback): void
+    {
+        DB::afterCommit($callback);
     }
 }

@@ -1,18 +1,19 @@
-# `hatchyu/laravel-steward`
+# Laravel Steward
 
-Elegant CQRS primitives, request query parsing, and native JSON:API stewardship for Laravel.
+Production-grade CQRS primitives, declarative HTTP query parsing, and native JSON:API stewardship for Laravel applications.
 
-## What the package provides
+## Overview
 
-- Action base classes for create/update style writes.
-- Query base classes for model reads.
-- Query parameter parsing for plain REST and JSON:API requests.
-- Query criteria objects for search, filter, and sort definitions.
-- Request validation rules for list endpoints, including JSON:API `include` and `fields[...]`.
-- A thin JSON:API resource base on top of Laravel's native `Illuminate\Http\Resources\JsonApi\JsonApiResource`.
-- Query-side eager-loading helpers derived from the same JSON:API resource metadata.
+**Laravel Steward** is a lightweight, high-performance architecture toolkit designed for modern Laravel applications following CQRS principles. It provides clean abstractions for encapsulate-and-execute write actions, declarative read queries, strict request query parameter validation, and seamless JSON:API resource mapping built directly on top of Laravel's native HTTP resource system.
 
-The package intentionally uses Laravel's built-in JSON:API resource support instead of `league/fractal`.
+### Key Features
+
+- **Encapsulated Write Actions**: Robust base classes for create, update, and delete actions featuring unconditional database transaction savepoints (`SAVEPOINT`) and post-commit callback hooks (`afterCommit`).
+- **Declarative Model Queries**: Fluent, type-safe read query builders supporting single-model lookups (`find`, `byId`, `byIdsOrFail`) and multi-criteria list queries.
+- **Universal Query Parameter Parsers**: Flexible HTTP query string and JSON body parsers for search, multi-field filtering (including comma-separated lists), sorting, and cursor or offset pagination.
+- **Native JSON:API Integration**: Resource primitives leveraging Laravel's native `JsonApiResource` without heavy third-party dependencies like `league/fractal`.
+- **Query-Side Relation Projection**: Auto-derived eager loading and sparse fieldset selection directly driven by JSON:API resource metadata.
+- **Bounded Request Validation**: Dedicated request validation rules (`FilterQueryRule`, `SortQueryRule`, `IncludeQueryRule`, `FieldsQueryRule`, `PageQueryRule`) sharing unified complexity and length limits (`QueryParamLimits`).
 
 > [!IMPORTANT]
 > **Security & Authorization Boundaries**  

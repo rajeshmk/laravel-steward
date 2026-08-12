@@ -86,3 +86,17 @@ test('it auto-detects jsonapi by data body shape and parses attributes', functio
         ->and($params->size)->toBe(5)
     ;
 });
+
+test('it auto-detects jsonapi by JSON-string page object shape', function (): void {
+    $parser = new AutoQueryParamsParser(
+        defaultParser: new DefaultQueryParamsParser(),
+        jsonApiParser: new JsonApiQueryParamsParser(),
+    );
+
+    $params = $parser->parse([
+        'page' => '{"number":3,"size":12}',
+    ]);
+
+    expect($params->page)->toBe(3);
+    expect($params->size)->toBe(12);
+});

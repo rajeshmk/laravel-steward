@@ -78,19 +78,17 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
         $includes = [];
 
         foreach (static::jsonApiIncludeResources() as $relation => $resourceClass) {
-            if (! is_string($relation)) {
+            if (! is_string($relation) || ! is_string($resourceClass) || ! is_subclass_of($resourceClass, self::class)) {
                 continue;
             }
 
             $path = $prefix === '' ? $relation : $prefix . '.' . $relation;
             $includes[] = $path;
 
-            if (is_string($resourceClass) && is_subclass_of($resourceClass, self::class)) {
-                $includes = [
-                    ...$includes,
-                    ...$resourceClass::jsonApiAllowedIncludes($depth - 1, $path),
-                ];
-            }
+            $includes = [
+                ...$includes,
+                ...$resourceClass::jsonApiAllowedIncludes($depth - 1, $path),
+            ];
         }
 
         return array_values(array_unique($includes));

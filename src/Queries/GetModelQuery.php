@@ -111,11 +111,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         $query = $this->applyIncludes($query, $params);
 
         if ($params->sort === []) {
-            $column = config('steward.default_sort_column');
-
-            if (! is_string($column) || trim($column) === '') {
-                $column = $this->model->getKeyName();
-            }
+            $column = $this->model->getKeyName();
 
             $direction = strtolower(trim((string) config('steward.default_sort_direction', 'desc')));
 

@@ -6,6 +6,7 @@ namespace Hatchyu\Steward\Queries\Parsers;
 
 use Hatchyu\Steward\Queries\Contracts\QueryParamsParserContract;
 use Hatchyu\Steward\Queries\Params\QueryParams;
+use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Http\Request;
 
 final readonly class AutoQueryParamsParser implements QueryParamsParserContract
@@ -43,6 +44,12 @@ final readonly class AutoQueryParamsParser implements QueryParamsParserContract
         }
 
         $page = $request->query('page');
+        if (is_string($page) && QuerySyntax::isJsonPayloadString($page)) {
+            $trimmed = trim($page);
+            if (json_validate($trimmed)) {
+                $page = json_decode($trimmed, true);
+            }
+        }
 
         if (is_array($page) && (array_key_exists('number', $page) || array_key_exists('size', $page))) {
             return true;
@@ -64,13 +71,16 @@ final readonly class AutoQueryParamsParser implements QueryParamsParserContract
      */
     private function looksLikeJsonApiParams(array $params): bool
     {
-        if (array_key_exists('page', $params) && is_array($params['page'])) {
-            /** @var array<mixed> $page */
-            $page = $params['page'];
-
-            if (array_key_exists('number', $page) || array_key_exists('size', $page)) {
-                return true;
+        $page = $params['page'] ?? null;
+        if (is_string($page) && QuerySyntax::isJsonPayloadString($page)) {
+            $trimmed = trim($page);
+            if (json_validate($trimmed)) {
+                $page = json_decode($trimmed, true);
             }
+        }
+
+        if (is_array($page) && (array_key_exists('number', $page) || array_key_exists('size', $page))) {
+            return true;
         }
 
         return false;
