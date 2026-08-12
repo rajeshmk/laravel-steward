@@ -79,6 +79,39 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
         return $value;
     }
 
+    /**
+     * Normalize a string, comma-separated string, or array into a list of trimmed non-empty strings.
+     *
+     * @return list<string>|null
+     */
+    private function normalizeStringList(mixed $value, string $paramName): ?array
+    {
+        $value = $this->decodeJsonIfString($value, $paramName);
+
+        if (is_string($value)) {
+            $value = explode(',', $value);
+        }
+
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $result = [];
+
+        foreach ($value as $item) {
+            if (! is_scalar($item) && $item !== null) {
+                return null;
+            }
+
+            $str = trim((string) $item);
+            if ($str !== '') {
+                $result[] = $str;
+            }
+        }
+
+        return array_values(array_unique($result));
+    }
+
     private function normalizeCursor(mixed $cursor): ?string
     {
         if (! is_string($cursor)) {
@@ -294,23 +327,23 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
                 ]);
             }
 
-            if (! is_string($fieldSet)) {
+            $fieldNames = $this->normalizeStringList($fieldSet, 'fields');
+
+            if ($fieldNames === null) {
                 throw ValidationException::withMessages([
-                    'fields' => sprintf('The fields set for %s must be a comma-separated string.', $type),
+                    'fields' => sprintf('The fields set for %s must be a string or list of strings.', (string) $type),
                 ]);
             }
-
-            $fieldNames = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
 
             foreach ($fieldNames as $fieldName) {
                 if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $fieldName)) {
                     throw ValidationException::withMessages([
-                        'fields' => sprintf('Invalid field name for %s: %s.', $type, $fieldName),
+                        'fields' => sprintf('Invalid field name for %s: %s.', (string) $type, $fieldName),
                     ]);
                 }
             }
 
-            $normalized[$type] = array_values(array_unique($fieldNames));
+            $normalized[(string) $type] = $fieldNames;
         }
 
         return $normalized;
