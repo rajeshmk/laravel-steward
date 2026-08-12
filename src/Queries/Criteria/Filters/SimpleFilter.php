@@ -10,6 +10,13 @@ final class SimpleFilter extends AbstractFilter
 {
     public function apply(Builder $query, mixed $value): Builder
     {
+        if (is_string($value) && str_contains($value, ',')) {
+            $value = array_values(array_filter(
+                array_map(trim(...), explode(',', $value)),
+                static fn (string $v): bool => $v !== ''
+            ));
+        }
+
         $values = is_array($value) ? $value : [$value];
         $count = count($values);
 

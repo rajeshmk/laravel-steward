@@ -76,3 +76,19 @@ test('it applies custom filter criteria from the definition', function (): void 
         ->and($query->getBindings())->toBe(['%doe%'])
     ;
 });
+
+test('it parses comma-separated string filter values into SQL whereIn clause', function (): void {
+    $processor = new DefaultQueryParamsProcessor();
+    $query = Customer::query();
+
+    $processor->apply(
+        $query,
+        new QueryParams(filters: ['id' => '1,2,3,4,5']),
+        new QueryDefinition(filterable: [new SimpleFilter('id', 'id')]),
+    );
+
+    expect($query->toSql())->toContain('id')
+        ->and($query->toSql())->toContain('in')
+        ->and($query->getBindings())->toBe(['1', '2', '3', '4', '5'])
+    ;
+});
