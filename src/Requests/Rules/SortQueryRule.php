@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Requests\Rules;
 
 use Closure;
+use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 final class SortQueryRule implements ValidationRule
@@ -31,7 +32,7 @@ final class SortQueryRule implements ValidationRule
         foreach (array_filter(array_map(trim(...), explode(',', $sort))) as $token) {
             $field = ltrim($token, '-');
 
-            if (! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', $field)) {
+            if (! QuerySyntax::isValidDotIdentifier($field)) {
                 $fail(sprintf('Invalid sort field: %s.', $field));
             }
         }
@@ -45,7 +46,7 @@ final class SortQueryRule implements ValidationRule
         foreach ($sort as $key => $value) {
             if (is_int($key) && is_string($value)) {
                 $field = ltrim(trim($value), '-');
-                if (! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', $field)) {
+                if (! QuerySyntax::isValidDotIdentifier($field)) {
                     $fail(sprintf('Invalid sort field: %s.', $field));
                 }
 
@@ -53,7 +54,7 @@ final class SortQueryRule implements ValidationRule
             }
 
             if (is_string($key) && is_string($value)) {
-                if (! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', $key)) {
+                if (! QuerySyntax::isValidDotIdentifier($key)) {
                     $fail(sprintf('Invalid sort field: %s.', $key));
                 }
 

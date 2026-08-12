@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Queries\Parsers\Concerns;
 
 use Hatchyu\Steward\Queries\Params\SortField;
+use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Validation\ValidationException;
 
 trait NormalizesQueryParams
@@ -81,7 +82,7 @@ trait NormalizesQueryParams
         $isDesc = str_starts_with($token, '-');
         $field = $isDesc ? substr($token, 1) : $token;
 
-        if (! is_string($field) || trim($field) === '' || ! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', trim($field))) {
+        if (! is_string($field) || trim($field) === '' || ! QuerySyntax::isValidDotIdentifier(trim($field))) {
             throw ValidationException::withMessages([
                 'sort' => sprintf('Invalid sort field: %s.', $field),
             ]);

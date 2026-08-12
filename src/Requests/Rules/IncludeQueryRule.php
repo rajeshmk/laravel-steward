@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Requests\Rules;
 
 use Closure;
+use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 final readonly class IncludeQueryRule implements ValidationRule
@@ -45,7 +46,7 @@ final readonly class IncludeQueryRule implements ValidationRule
         }
 
         foreach ($includes as $include) {
-            if (! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', $include)) {
+            if (! QuerySyntax::isValidDotIdentifier($include)) {
                 $fail(sprintf('Invalid include path: %s.', $include));
 
                 continue;

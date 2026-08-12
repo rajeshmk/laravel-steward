@@ -5,19 +5,27 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Requests\Rules;
 
 use Closure;
+use Hatchyu\Steward\Queries\Parsers\Concerns\NormalizesQueryParams;
+use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 final class FilterQueryRule implements ValidationRule
 {
+    use NormalizesQueryParams;
+
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $filters = $this->normalizeFilters($value, $fail);
+        $filters = $this->decodeJsonIfString($value, 'filter');
         if (! is_array($filters)) {
+            $fail('The filter must be an array or a JSON object string.');
+
             return;
         }
 
-        foreach ($filters as $key => $filterValue) {
-            if (! is_string($key) || ! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', $key)) {
+        $normalized = $this->normalizeFilterValues($filters);
+
+        foreach ($normalized as $key => $filterValue) {
+            if (! is_string($key) || ! QuerySyntax::isValidDotIdentifier((string) $key)) {
                 $fail(sprintf('Invalid filter key: %s.', (string) $key));
 
                 continue;
@@ -36,47 +44,5 @@ final class FilterQueryRule implements ValidationRule
                 $key
             ));
         }
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function normalizeFilters(mixed $value, Closure $fail): ?array
-    {
-        if (is_array($value)) {
-            return $value;
-        }
-
-        if (! is_string($value)) {
-            $fail('The filter must be an array or a JSON object string.');
-
-            return null;
-        }
-
-        $decoded = json_decode($value, true);
-        if (! is_array($decoded)) {
-            $fail('The filter must be an array or a JSON object string.');
-
-            return null;
-        }
-
-        return $decoded;
-    }
-
-    private function isScalarOrNull(mixed $value): bool
-    {
-        return is_scalar($value) || $value === null;
-    }
-
-    /**
-     * @param array<mixed> $value
-     */
-    private function isScalarList(array $value): bool
-    {
-        if (! array_is_list($value)) {
-            return false;
-        }
-
-        return array_all($value, fn ($item): bool => $this->isScalarOrNull($item));
     }
 }

@@ -8,6 +8,7 @@ use Hatchyu\Steward\Queries\Contracts\QueryParamsParserContract;
 use Hatchyu\Steward\Queries\Params\QueryParams;
 use Hatchyu\Steward\Queries\Params\SortField;
 use Hatchyu\Steward\Queries\Parsers\Concerns\NormalizesQueryParams;
+use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -116,7 +117,7 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
         $normalized = $this->normalizeFilterValues($normalized);
 
         foreach ($normalized as $key => $filterValue) {
-            if (! is_string($key) || ! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', $key)) {
+            if (! is_string($key) || ! QuerySyntax::isValidDotIdentifier((string) $key)) {
                 throw ValidationException::withMessages([
                     'filter' => sprintf('Invalid filter key: %s.', (string) $key),
                 ]);
@@ -185,7 +186,7 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
         $includes = array_values(array_filter(array_map(trim(...), explode(',', $include))));
 
         foreach ($includes as $path) {
-            if (! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', $path)) {
+            if (! QuerySyntax::isValidDotIdentifier($path)) {
                 throw ValidationException::withMessages([
                     'include' => sprintf('Invalid include path: %s.', $path),
                 ]);
@@ -219,7 +220,7 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
         $normalized = [];
 
         foreach ($fields as $type => $fieldSet) {
-            if (! is_string($type) || ! preg_match('/^[A-Za-z_][A-Za-z0-9_-]*$/', $type)) {
+            if (! is_string($type) || ! QuerySyntax::isValidResourceType((string) $type)) {
                 throw ValidationException::withMessages([
                     'fields' => sprintf('Invalid resource type for fields: %s.', (string) $type),
                 ]);
@@ -234,7 +235,7 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
             }
 
             foreach ($fieldNames as $fieldName) {
-                if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $fieldName)) {
+                if (! QuerySyntax::isValidSimpleIdentifier($fieldName)) {
                     throw ValidationException::withMessages([
                         'fields' => sprintf('Invalid field name for %s: %s.', (string) $type, $fieldName),
                     ]);

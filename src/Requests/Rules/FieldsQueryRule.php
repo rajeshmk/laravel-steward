@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Requests\Rules;
 
 use Closure;
+use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 final readonly class FieldsQueryRule implements ValidationRule
@@ -41,7 +42,7 @@ final readonly class FieldsQueryRule implements ValidationRule
         }
 
         foreach ($value as $type => $fieldSet) {
-            if (! is_string($type) || ! preg_match('/^[A-Za-z_][A-Za-z0-9_-]*$/', $type)) {
+            if (! is_string($type) || ! QuerySyntax::isValidResourceType((string) $type)) {
                 $fail(sprintf('Invalid resource type for fields: %s.', (string) $type));
 
                 continue;
@@ -66,7 +67,7 @@ final readonly class FieldsQueryRule implements ValidationRule
             $allowed = $this->allowedFields[(string) $type] ?? null;
 
             foreach ($fields as $field) {
-                if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $field)) {
+                if (! QuerySyntax::isValidSimpleIdentifier($field)) {
                     $fail(sprintf('Invalid field name for %s: %s.', (string) $type, $field));
 
                     continue;
