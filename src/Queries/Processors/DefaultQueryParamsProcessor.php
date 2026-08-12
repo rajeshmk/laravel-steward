@@ -6,7 +6,6 @@ namespace Hatchyu\Steward\Queries\Processors;
 
 use Hatchyu\Steward\Queries\Contracts\QueryParamsProcessorContract;
 use Hatchyu\Steward\Queries\Criteria\Filters\AbstractFilter;
-use Hatchyu\Steward\Queries\Criteria\Searches\AbstractSearch;
 use Hatchyu\Steward\Queries\Criteria\Sorts\AbstractSort;
 use Hatchyu\Steward\Queries\Params\QueryDefinition;
 use Hatchyu\Steward\Queries\Params\QueryParams;

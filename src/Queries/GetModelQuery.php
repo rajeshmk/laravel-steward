@@ -10,7 +10,6 @@ use Hatchyu\Steward\Queries\Criteria\Filters\AbstractFilter;
 use Hatchyu\Steward\Queries\Criteria\Sorts\AbstractSort;
 use Hatchyu\Steward\Queries\Params\QueryDefinition;
 use Hatchyu\Steward\Queries\Params\QueryParams;
-use Hatchyu\Steward\Queries\Params\SortField;
 use Hatchyu\Steward\Resources\Concerns\ResolvesJsonApiResourceMetadata;
 use Hatchyu\Steward\Resources\JsonApiResource;
 use Illuminate\Contracts\Pagination\CursorPaginator;
