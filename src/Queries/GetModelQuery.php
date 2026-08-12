@@ -239,7 +239,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
             return;
         }
 
-        $allowed = $this->resolveAllowedIncludes($this->jsonApiResource(), $this->allowedIncludes());
+        $allowed = $this->resolvedAllowedIncludes();
         $unknown = array_values(array_diff($params->includes, $allowed));
 
         if ($unknown === []) {
