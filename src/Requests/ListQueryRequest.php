@@ -9,11 +9,14 @@ use Hatchyu\Steward\Requests\Rules\FilterQueryRule;
 use Hatchyu\Steward\Requests\Rules\IncludeQueryRule;
 use Hatchyu\Steward\Requests\Rules\PageQueryRule;
 use Hatchyu\Steward\Requests\Rules\SortQueryRule;
+use Hatchyu\Steward\Resources\Concerns\ResolvesJsonApiResourceMetadata;
 use Hatchyu\Steward\Resources\JsonApiResource;
 use Override;
 
 abstract class ListQueryRequest extends BaseQueryRequest
 {
+    use ResolvesJsonApiResourceMetadata;
+
     #[Override]
     protected function queryRules(): array
     {
@@ -21,8 +24,8 @@ abstract class ListQueryRequest extends BaseQueryRequest
             'search' => ['sometimes', 'string', 'max:255'],
             'filter' => ['sometimes', new FilterQueryRule()],
             'sort' => ['sometimes', new SortQueryRule()],
-            'include' => ['sometimes', new IncludeQueryRule($this->resolvedAllowedIncludes())],
-            'fields' => ['sometimes', new FieldsQueryRule($this->resolvedAllowedFields())],
+            'include' => ['sometimes', new IncludeQueryRule($this->resolveAllowedIncludes($this->primaryJsonApiResource(), $this->allowedIncludes()))],
+            'fields' => ['sometimes', new FieldsQueryRule($this->resolveAllowedFields($this->primaryJsonApiResource(), $this->allowedFields()))],
             'fields.*' => ['sometimes'],
             'page' => ['sometimes', new PageQueryRule()],
             'page.number' => ['sometimes', 'integer', 'min:1'],
@@ -53,45 +56,5 @@ abstract class ListQueryRequest extends BaseQueryRequest
     protected function primaryJsonApiResource(): ?string
     {
         return null;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function resolvedAllowedIncludes(): array
-    {
-        $allowedIncludes = $this->allowedIncludes();
-
-        if ($allowedIncludes !== []) {
-            return $allowedIncludes;
-        }
-
-        $resource = $this->primaryJsonApiResource();
-
-        if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
-            return [];
-        }
-
-        return $resource::jsonApiAllowedIncludes();
-    }
-
-    /**
-     * @return array<string, list<string>>
-     */
-    private function resolvedAllowedFields(): array
-    {
-        $allowedFields = $this->allowedFields();
-
-        if ($allowedFields !== []) {
-            return $allowedFields;
-        }
-
-        $resource = $this->primaryJsonApiResource();
-
-        if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
-            return [];
-        }
-
-        return $resource::jsonApiAllowedFieldsets();
     }
 }

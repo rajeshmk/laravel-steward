@@ -11,6 +11,7 @@ use Hatchyu\Steward\Queries\Criteria\Sorts\AbstractSort;
 use Hatchyu\Steward\Queries\Params\QueryDefinition;
 use Hatchyu\Steward\Queries\Params\QueryParams;
 use Hatchyu\Steward\Queries\Params\SortField;
+use Hatchyu\Steward\Resources\Concerns\ResolvesJsonApiResourceMetadata;
 use Hatchyu\Steward\Resources\JsonApiResource;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -28,6 +29,7 @@ use Illuminate\Validation\ValidationException;
 
 class GetModelQuery extends ModelQuery implements GetModelQueryContract
 {
+    use ResolvesJsonApiResourceMetadata;
     public function __construct(
         Model $model,
         protected readonly QueryParamsProcessorContract $queryParamsProcessor,
@@ -237,7 +239,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
             return;
         }
 
-        $allowed = $this->resolvedAllowedIncludes();
+        $allowed = $this->resolveAllowedIncludes($this->jsonApiResource(), $this->allowedIncludes());
         $unknown = array_values(array_diff($params->includes, $allowed));
 
         if ($unknown === []) {
@@ -582,24 +584,5 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
             : 'asc';
 
         $query->orderBy($keyColumn, $direction);
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function resolvedAllowedIncludes(): array
-    {
-        $explicitIncludes = $this->allowedIncludes();
-        if ($explicitIncludes !== []) {
-            return array_values(array_unique($explicitIncludes));
-        }
-
-        $resource = $this->jsonApiResource();
-
-        if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
-            return [];
-        }
-
-        return $resource::jsonApiAllowedIncludes();
     }
 }
