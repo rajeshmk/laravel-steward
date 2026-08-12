@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Actions;
 
 use Hatchyu\Steward\Data\AbstractData;
+use Hatchyu\Steward\Queries\Contracts\FindModelQueryContract;
 use Illuminate\Database\Eloquent\Model;
 use LogicException;
 
@@ -42,6 +43,23 @@ abstract class AbstractModelAction extends AbstractAction
     protected function newModelInstance(): Model
     {
         return $this->model()->newInstance();
+    }
+
+    /**
+     * Verify that the query object is configured for the exact same model class as this action.
+     */
+    protected function ensureQueryModelMatchesAction(FindModelQueryContract $query): void
+    {
+        $actionModelClass = $this->model()::class;
+        $queryModelClass = $query->modelClass();
+
+        if ($queryModelClass !== $actionModelClass) {
+            throw new LogicException(sprintf(
+                'Expected query model class to be %s, got %s.',
+                $actionModelClass,
+                $queryModelClass
+            ));
+        }
     }
 
     /**

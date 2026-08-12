@@ -8,7 +8,6 @@ use Hatchyu\Steward\Data\AbstractData;
 use Hatchyu\Steward\Exceptions\UpdateModelException;
 use Hatchyu\Steward\Queries\Contracts\FindModelQueryContract;
 use Illuminate\Database\Eloquent\Model;
-use LogicException;
 use Throwable;
 
 /**
@@ -30,16 +29,7 @@ abstract class UpdateModelAction extends AbstractModelAction
     final public function execute(int|string $id, AbstractData $data): Model
     {
         return $this->transaction(function () use ($id, $data): Model {
-            $actionModelClass = $this->model()::class;
-            $queryModelClass = $this->findModelQuery->modelClass();
-
-            if ($queryModelClass !== $actionModelClass) {
-                throw new LogicException(sprintf(
-                    'Expected query model class to be %s, got %s.',
-                    $actionModelClass,
-                    $queryModelClass
-                ));
-            }
+            $this->ensureQueryModelMatchesAction($this->findModelQuery);
 
             $model = $this->findModelQuery->byIdOrFail($id);
 

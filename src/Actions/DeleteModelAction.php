@@ -21,6 +21,8 @@ abstract class DeleteModelAction extends AbstractModelAction
 
     final public function execute(int|string $id): void
     {
+        $this->ensureQueryModelMatchesAction($this->findModelQuery);
+
         $model = $this->findModelQuery->byIdOrFail($id);
 
         $this->executeModel($model);

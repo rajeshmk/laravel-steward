@@ -258,7 +258,7 @@ abstract class AbstractData
                 return $value;
             }
 
-            if (is_string($value) && preg_match('/^-?\d+$/', $value) === 1) {
+            if (self::isIntegerString($value)) {
                 return (int) $value;
             }
         }
@@ -336,29 +336,13 @@ abstract class AbstractData
         }
 
         if ($value === null) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Invalid boolean value for attribute "%s" in %s. Got %s (%s).',
-                    $parameterName,
-                    static::class,
-                    get_debug_type($value),
-                    self::stringifyValue($value)
-                )
-            );
+            self::throwInvalidScalarAttributeException($parameterName, 'boolean', $value);
         }
 
         $normalized = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 
         if ($normalized === null) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Invalid boolean value for attribute "%s" in %s. Got %s (%s).',
-                    $parameterName,
-                    static::class,
-                    get_debug_type($value),
-                    self::stringifyValue($value)
-                )
-            );
+            self::throwInvalidScalarAttributeException($parameterName, 'boolean', $value);
         }
 
         return $normalized;
@@ -370,7 +354,7 @@ abstract class AbstractData
             return $value;
         }
 
-        if (is_string($value) && preg_match('/^-?\d+$/', $value) === 1) {
+        if (self::isIntegerString($value)) {
             return (int) $value;
         }
 
@@ -401,6 +385,11 @@ abstract class AbstractData
         }
 
         self::throwInvalidScalarAttributeException($parameterName, 'string', $value);
+    }
+
+    private static function isIntegerString(mixed $value): bool
+    {
+        return is_string($value) && preg_match('/^-?\d+$/', $value) === 1;
     }
 
     private static function throwInvalidScalarAttributeException(
