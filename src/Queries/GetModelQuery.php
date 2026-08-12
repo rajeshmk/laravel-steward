@@ -158,6 +158,12 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         return null;
     }
 
+    #[Override]
+    protected function primaryJsonApiResource(): ?string
+    {
+        return $this->jsonApiResource();
+    }
+
     /**
      * Explicit include allowlist for queries without JsonApiResource metadata.
      * An empty list means that includes are not supported.

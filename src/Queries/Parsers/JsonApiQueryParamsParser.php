@@ -6,218 +6,255 @@ namespace Hatchyu\Steward\Queries\Parsers;
 
 use Hatchyu\Steward\Queries\Contracts\QueryParamsParserContract;
 use Hatchyu\Steward\Queries\Params\QueryParams;
-use Hatchyu\Steward\Queries\Params\SortField;
 use Hatchyu\Steward\Queries\Parsers\Concerns\NormalizesQueryParams;
 use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-final readonly class JsonApiQueryParamsParser implements QueryParamsParserContract
+final class JsonApiQueryParamsParser implements QueryParamsParserContract
 {
     use NormalizesQueryParams;
 
-    public function __construct(
-        private int $defaultSize = 15,
-        private int $maxSize = 100,
-    ) {}
-
     public function parseRequest(Request $request): QueryParams
     {
-        /** @var array<string, mixed> $params */
-        $params = $this->extractParamsFromRequest($request);
-
-        return $this->parse($params);
+        return $this->parse($this->extractInputPayload($request));
     }
 
     public function parse(array $params): QueryParams
     {
-        if (array_key_exists('size', $params)) {
-            throw ValidationException::withMessages([
-                'size' => 'Use page[size] for JSON:API pagination.',
-            ]);
-        }
-
-        if (array_key_exists('cursor', $params)) {
-            throw ValidationException::withMessages([
-                'cursor' => 'Use page[cursor] for JSON:API cursor pagination.',
-            ]);
-        }
-
-        $pageParam = $this->decodeJsonIfString($params['page'] ?? null, 'page');
-        $filters = $this->normalizeFilters($params['filter'] ?? null, array_key_exists('filter', $params));
-        $search = $this->normalizeSearch($params['search'] ?? null, $filters);
-        $sort = $this->normalizeSort($params['sort'] ?? null, array_key_exists('sort', $params));
-        $includes = $this->normalizeIncludes($params['include'] ?? null, array_key_exists('include', $params));
-        $fields = $this->normalizeFields($params['fields'] ?? null, array_key_exists('fields', $params));
-
-        $cursor = $this->normalizeCursor(is_array($pageParam) ? ($pageParam['cursor'] ?? null) : null);
-        [$page, $size] = $this->normalizePagination($pageParam, array_key_exists('page', $params));
-
         return new QueryParams(
-            search: $search,
-            filters: $filters,
-            sort: $sort,
-            includes: $includes,
-            fields: $fields,
-            page: $page,
-            size: $size,
-            cursor: $cursor,
+            search: $this->extractSearch($params),
+            filters: $this->extractFilters($params),
+            sort: $this->extractSort($params),
+            includes: $this->extractIncludes($params),
+            fields: $this->extractFields($params),
+            page: $this->extractPageNumber($params),
+            size: $this->extractPageSize($params),
+            cursor: $this->extractCursor($params),
         );
-    }
-
-    private function normalizeCursor(mixed $cursor): ?string
-    {
-        if (! is_string($cursor)) {
-            return null;
-        }
-
-        $cursor = trim($cursor);
-
-        return $cursor === '' ? null : $cursor;
-    }
-
-    /**
-     * @param array<string, mixed> $filters
-     */
-    private function normalizeSearch(mixed $search, array &$filters): ?string
-    {
-        if (is_string($search)) {
-            $search = trim($search);
-
-            return $search === '' ? null : $search;
-        }
-
-        $filterSearch = $filters['search'] ?? null;
-        if (! is_string($filterSearch)) {
-            return null;
-        }
-
-        unset($filters['search']);
-        $filterSearch = trim($filterSearch);
-
-        return $filterSearch === '' ? null : $filterSearch;
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function normalizeFilters(mixed $filters, bool $provided): array
+    private function extractInputPayload(Request $request): array
     {
-        $filters = $this->decodeJsonIfString($filters, 'filter');
-        $normalized = [];
+        $query = $request->query->all();
 
-        if (is_array($filters)) {
-            $normalized = $filters;
-        } elseif ($provided) {
+        $data = $request->input('data');
+        if (! is_array($data)) {
+            return $query;
+        }
+
+        $attributes = $data['attributes'] ?? [];
+        if (! is_array($attributes)) {
+            return $query;
+        }
+
+        foreach (['filter', 'sort', 'include', 'fields', 'page', 'search'] as $key) {
+            if (! array_key_exists($key, $query) && array_key_exists($key, $attributes)) {
+                $query[$key] = $attributes[$key];
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function extractSearch(array $params): ?string
+    {
+        $search = $params['search'] ?? null;
+        if (! is_string($search) && $search !== null) {
             throw ValidationException::withMessages([
-                'filter' => 'The filter must be an object or a JSON object string.',
+                'search' => 'The search parameter must be a string.',
             ]);
         }
 
-        $normalized = $this->normalizeFilterValues($normalized);
+        $filter = $params['filter'] ?? null;
+        if (is_array($filter) && array_key_exists('search', $filter) && is_string($filter['search'])) {
+            $search = $filter['search'];
+        }
 
-        foreach ($normalized as $key => $filterValue) {
+        if ($search === null) {
+            return null;
+        }
+
+        $trimmed = trim($search);
+
+        return $trimmed === '' ? null : $trimmed;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, mixed>
+     */
+    private function extractFilters(array $params): array
+    {
+        $filters = $this->decodeJsonIfString($params['filter'] ?? null, 'filter');
+        if ($filters === null) {
+            return [];
+        }
+
+        if (! is_array($filters) || ! QuerySyntax::isAssociativeArray($filters)) {
+            throw ValidationException::withMessages([
+                'filter' => 'The filter parameter must be an object or associative array.',
+            ]);
+        }
+
+        unset($filters['search']);
+
+        $normalized = $this->normalizeFilterValues($filters);
+
+        foreach ($normalized as $key => $value) {
             if (! is_string($key) || ! QuerySyntax::isValidDotIdentifier((string) $key)) {
                 throw ValidationException::withMessages([
                     'filter' => sprintf('Invalid filter key: %s.', (string) $key),
                 ]);
             }
 
-            if ($this->isScalarOrNull($filterValue)) {
-                continue;
+            if (! $this->isScalarOrNull($value) && (! is_array($value) || ! $this->isScalarList($value))) {
+                throw ValidationException::withMessages([
+                    'filter' => sprintf(
+                        'Invalid filter value for %s. Expected scalar, null, or list of scalars.',
+                        (string) $key
+                    ),
+                ]);
             }
-
-            if (is_array($filterValue) && $this->isScalarList($filterValue)) {
-                continue;
-            }
-
-            throw ValidationException::withMessages([
-                'filter' => sprintf(
-                    'Invalid filter value for %s. Expected scalar, null, or list of scalars.',
-                    $key
-                ),
-            ]);
         }
 
         return $normalized;
     }
 
     /**
-     * @return list<SortField>
+     * @param array<string, mixed> $params
+     *
+     * @return list<\Hatchyu\Steward\Queries\Params\SortField>
      */
-    private function normalizeSort(mixed $sort, bool $provided): array
+    private function extractSort(array $params): array
     {
-        if ($sort === null || $sort === '') {
+        $sort = $this->decodeJsonIfString($params['sort'] ?? null, 'sort');
+
+        if ($sort === null) {
             return [];
         }
 
-        if (! is_string($sort)) {
-            if ($provided) {
+        if (is_string($sort)) {
+            return $this->parseSortString($sort);
+        }
+
+        if (is_array($sort)) {
+            $sortFields = [];
+
+            foreach ($sort as $key => $value) {
+                if (is_int($key) && is_string($value)) {
+                    $token = trim($value);
+                    $isDesc = str_starts_with($token, '-');
+                    $field = $isDesc ? substr($token, 1) : $token;
+
+                    if ($field === '' || ! QuerySyntax::isValidDotIdentifier($field)) {
+                        throw ValidationException::withMessages([
+                            'sort' => sprintf('Invalid sort field: %s.', $field),
+                        ]);
+                    }
+
+                    $sortFields[] = new \Hatchyu\Steward\Queries\Params\SortField(
+                        field: $field,
+                        direction: $isDesc ? 'desc' : 'asc'
+                    );
+
+                    continue;
+                }
+
+                if (is_string($key) && is_string($value)) {
+                    $field = trim($key);
+                    $direction = strtolower(trim($value));
+
+                    if ($field === '' || ! QuerySyntax::isValidDotIdentifier($field)) {
+                        throw ValidationException::withMessages([
+                            'sort' => sprintf('Invalid sort field: %s.', $field),
+                        ]);
+                    }
+
+                    if (! in_array($direction, ['asc', 'desc'], true)) {
+                        throw ValidationException::withMessages([
+                            'sort' => sprintf('Unsupported sort direction for %s: %s.', $field, $value),
+                        ]);
+                    }
+
+                    $sortFields[] = new \Hatchyu\Steward\Queries\Params\SortField(
+                        field: $field,
+                        direction: $direction
+                    );
+
+                    continue;
+                }
+
                 throw ValidationException::withMessages([
-                    'sort' => 'JSON:API sort must be a comma-separated string.',
+                    'sort' => 'Invalid sort parameter format.',
                 ]);
             }
 
-            return [];
+            return $sortFields;
         }
 
-        return $this->parseSortString($sort);
+        throw ValidationException::withMessages([
+            'sort' => 'The sort parameter must be a string or array.',
+        ]);
     }
 
     /**
+     * @param array<string, mixed> $params
+     *
      * @return list<string>
      */
-    private function normalizeIncludes(mixed $include, bool $provided): array
+    private function extractIncludes(array $params): array
     {
-        if ($include === null || $include === '') {
-            return [];
-        }
+        $includes = $this->normalizeStringList($params['include'] ?? null, 'include');
 
-        if (! is_string($include)) {
-            if ($provided) {
+        if ($includes === null) {
+            if (array_key_exists('include', $params) && $params['include'] !== null) {
                 throw ValidationException::withMessages([
-                    'include' => 'JSON:API include must be a comma-separated string.',
+                    'include' => 'The include parameter must be a comma-separated string or array.',
                 ]);
             }
 
             return [];
         }
 
-        $includes = array_values(array_filter(array_map(trim(...), explode(',', $include))));
-
-        foreach ($includes as $path) {
-            if (! QuerySyntax::isValidDotIdentifier($path)) {
+        foreach ($includes as $include) {
+            if (! QuerySyntax::isValidDotIdentifier($include)) {
                 throw ValidationException::withMessages([
-                    'include' => sprintf('Invalid include path: %s.', $path),
+                    'include' => sprintf('Invalid include path: %s.', $include),
                 ]);
             }
         }
 
-        return array_values(array_unique($includes));
+        return $includes;
     }
 
     /**
+     * @param array<string, mixed> $params
+     *
      * @return array<string, list<string>>
      */
-    private function normalizeFields(mixed $fields, bool $provided): array
+    private function extractFields(array $params): array
     {
-        $fields = $this->decodeJsonIfString($fields, 'fields');
+        $fields = $this->decodeJsonIfString($params['fields'] ?? null, 'fields');
 
         if ($fields === null) {
             return [];
         }
 
-        if (! is_array($fields)) {
-            if ($provided) {
-                throw ValidationException::withMessages([
-                    'fields' => 'JSON:API fields must be an object keyed by resource type.',
-                ]);
-            }
-
-            return [];
+        if (! is_array($fields) || ! QuerySyntax::isAssociativeArray($fields)) {
+            throw ValidationException::withMessages([
+                'fields' => 'The fields parameter must be an object keyed by resource type.',
+            ]);
         }
 
-        $normalized = [];
+        $result = [];
 
         foreach ($fields as $type => $fieldSet) {
             if (! is_string($type) || ! QuerySyntax::isValidResourceType((string) $type)) {
@@ -226,114 +263,86 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
                 ]);
             }
 
-            $fieldNames = $this->normalizeStringList($fieldSet, 'fields');
+            $list = $this->normalizeStringList($fieldSet, sprintf('fields.%s', $type));
 
-            if ($fieldNames === null) {
+            if ($list === null) {
                 throw ValidationException::withMessages([
                     'fields' => sprintf('The fields set for %s must be a string or list of strings.', (string) $type),
                 ]);
             }
 
-            foreach ($fieldNames as $fieldName) {
-                if (! QuerySyntax::isValidSimpleIdentifier($fieldName)) {
+            foreach ($list as $field) {
+                if (! QuerySyntax::isValidSimpleIdentifier($field)) {
                     throw ValidationException::withMessages([
-                        'fields' => sprintf('Invalid field name for %s: %s.', (string) $type, $fieldName),
+                        'fields' => sprintf('Invalid field name for %s: %s.', (string) $type, $field),
                     ]);
                 }
             }
 
-            $normalized[(string) $type] = $fieldNames;
-        }
-
-        return $normalized;
-    }
-
-    /**
-     * @return array{int, int}
-     */
-    private function normalizePagination(mixed $page, bool $provided): array
-    {
-        $page = $this->decodeJsonIfString($page, 'page');
-
-        if (! $provided && $page === null) {
-            return [1, $this->defaultSize];
-        }
-
-        if (! is_array($page)) {
-            throw ValidationException::withMessages([
-                'page' => 'JSON:API pagination must use page[number] and page[size].',
-            ]);
-        }
-
-        $pageNumber = $this->normalizePositiveInt($page['number'] ?? 1, 1);
-        $size = $this->normalizePositiveInt($page['size'] ?? $this->defaultSize, $this->defaultSize);
-        $size = min($size, $this->maxSize);
-
-        return [$pageNumber, $size];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function extractParamsFromRequest(Request $request): array
-    {
-        /** @var array<string, mixed> $queryParams */
-        $queryParams = $request->query();
-
-        /** @var mixed $rawJsonBody */
-        $rawJsonBody = $request->json()->all();
-        if (! is_array($rawJsonBody) || $rawJsonBody === []) {
-            return $queryParams;
-        }
-
-        /** @var array<string, mixed> $jsonBody */
-        $jsonBody = $rawJsonBody;
-
-        $bodyParams = $this->extractJsonApiBodyParams($jsonBody);
-        if ($bodyParams === []) {
-            return $queryParams;
-        }
-
-        // Query string should win over body for the same keys.
-        return array_replace_recursive($bodyParams, $queryParams);
-    }
-
-    /**
-     * @param array<string, mixed> $jsonBody
-     *
-     * @return array<string, mixed>
-     */
-    private function extractJsonApiBodyParams(array $jsonBody): array
-    {
-        $data = $jsonBody['data'] ?? null;
-        if (! is_array($data)) {
-            return $this->extractTopLevelBodyParams($jsonBody);
-        }
-
-        $attributes = $data['attributes'] ?? null;
-        if (! is_array($attributes)) {
-            return [];
-        }
-
-        return $this->extractTopLevelBodyParams($attributes);
-    }
-
-    /**
-     * @param array<string, mixed> $source
-     *
-     * @return array<string, mixed>
-     */
-    private function extractTopLevelBodyParams(array $source): array
-    {
-        $allowed = ['search', 'filter', 'sort', 'include', 'fields', 'page', 'size'];
-        $result = [];
-
-        foreach ($allowed as $key) {
-            if (array_key_exists($key, $source)) {
-                $result[$key] = $source[$key];
-            }
+            $result[(string) $type] = $list;
         }
 
         return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function extractPageNumber(array $params): int
+    {
+        if (array_key_exists('cursor', $params)) {
+            throw ValidationException::withMessages([
+                'page' => 'JSON:API pagination does not support top-level cursor parameter.',
+            ]);
+        }
+
+        $page = $this->decodeJsonIfString($params['page'] ?? null, 'page');
+
+        if (array_key_exists('size', $params) && ! is_array($page)) {
+            throw ValidationException::withMessages([
+                'page' => 'JSON:API pagination requires page[number] and page[size].',
+            ]);
+        }
+
+        if (is_array($page)) {
+            if (array_key_exists('number', $page)) {
+                return $this->normalizePositiveInt($page['number'], 1);
+            }
+
+            return 1;
+        }
+
+        return $this->normalizePositiveInt($page, 1);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function extractPageSize(array $params): int
+    {
+        $defaultSize = (int) config('steward.default_page_size', 15);
+        $page = $this->decodeJsonIfString($params['page'] ?? null, 'page');
+
+        if (is_array($page) && array_key_exists('size', $page)) {
+            return $this->normalizePositiveInt($page['size'], $defaultSize);
+        }
+
+        return $defaultSize;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function extractCursor(array $params): ?string
+    {
+        $page = $this->decodeJsonIfString($params['page'] ?? null, 'page');
+
+        if (is_array($page) && array_key_exists('cursor', $page)) {
+            $cursor = $page['cursor'];
+
+            return is_scalar($cursor) && trim((string) $cursor) !== '' ? trim((string) $cursor) : null;
+        }
+
+        return null;
     }
 }

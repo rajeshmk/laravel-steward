@@ -96,19 +96,19 @@ test('it throws when jsonapi uses a top level cursor', function (): void {
     ]))->toThrow(ValidationException::class);
 });
 
-test('it throws when jsonapi sort is not a string', function (): void {
+test('it throws when jsonapi sort has invalid element shape', function (): void {
     $parser = new JsonApiQueryParamsParser();
 
     expect(fn (): mixed => $parser->parse([
-        'sort' => ['name' => 'asc'],
+        'sort' => ['name' => ['invalid']],
     ]))->toThrow(ValidationException::class);
 });
 
-test('it throws when jsonapi include is not a string', function (): void {
+test('it throws when jsonapi include is not a string or array list', function (): void {
     $parser = new JsonApiQueryParamsParser();
 
     expect(fn (): mixed => $parser->parse([
-        'include' => ['addresses'],
+        'include' => true,
     ]))->toThrow(ValidationException::class);
 });
 

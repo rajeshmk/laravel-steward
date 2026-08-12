@@ -51,11 +51,20 @@ final class QuerySyntax
     }
 
     /**
-     * Normalizes a comma-separated string, JSON array string, or PHP array into a list of trimmed non-empty strings.
-     *
-     * @return list<string>
+     * Determine if a value is an associative array (or empty array) representing an object.
      */
-    public static function parseStringList(mixed $value): array
+    public static function isAssociativeArray(mixed $value): bool
+    {
+        return is_array($value) && ($value === [] || ! array_is_list($value));
+    }
+
+    /**
+     * Normalizes a comma-separated string, JSON array string, or PHP array into a list of trimmed non-empty strings.
+     * Returns null if any list element is an array, object, or invalid non-scalar.
+     *
+     * @return list<string>|null
+     */
+    public static function parseStringList(mixed $value): ?array
     {
         $value = self::tryDecodeJson($value);
 
@@ -64,17 +73,23 @@ final class QuerySyntax
         }
 
         if (! is_array($value)) {
-            return [];
+            return null;
         }
 
         $result = [];
 
         foreach ($value as $item) {
-            if (is_scalar($item) && $item !== null) {
-                $str = trim((string) $item);
-                if ($str !== '') {
-                    $result[] = $str;
-                }
+            if (! is_scalar($item) && $item !== null) {
+                return null;
+            }
+
+            if ($item === null) {
+                return null;
+            }
+
+            $str = trim((string) $item);
+            if ($str !== '') {
+                $result[] = $str;
             }
         }
 

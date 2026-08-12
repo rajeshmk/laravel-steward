@@ -52,7 +52,7 @@ test('it auto-detects jsonapi by page object shape', function (): void {
 
     expect(fn (): mixed => $parser->parse([
         'page' => ['number' => '1'],
-        'size' => '25',
+        'cursor' => 'opaque-cursor',
     ]))->toThrow(ValidationException::class);
 });
 

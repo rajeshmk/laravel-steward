@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Hatchyu\Steward\Tests\Unit;
 
+use Hatchyu\Steward\Queries\Parsers\JsonApiQueryParamsParser;
 use Hatchyu\Steward\Requests\ListQueryRequest;
 use Illuminate\Validation\ValidationException;
 use Hatchyu\Steward\Tests\TestCase;
-
 
 test('it allows jsonapi include and fields parameters derived from the resource', function (): void {
     $request = new class() extends ListQueryRequest
@@ -43,8 +43,7 @@ test('it rejects unsupported include paths', function (): void {
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class)
-    ;
+        ->toThrow(ValidationException::class);
 });
 
 test('it rejects unsupported sparse fieldsets', function (): void {
@@ -63,8 +62,7 @@ test('it rejects unsupported sparse fieldsets', function (): void {
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class)
-    ;
+        ->toThrow(ValidationException::class);
 });
 
 test('it allows filter as json object string', function (): void {
@@ -97,6 +95,79 @@ test('it rejects invalid json in filter string', function (): void {
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class)
-    ;
+        ->toThrow(ValidationException::class);
+});
+
+test('it validates and parses JSON sort array via ListQueryRequest toQueryParams', function (): void {
+    $request = new class() extends ListQueryRequest
+    {
+        protected function primaryJsonApiResource(): string
+        {
+            return ListQueryRequestValidationTestCustomerResource::class;
+        }
+    };
+
+    $request->initialize([
+        'sort' => '["-created_at","name"]',
+    ]);
+
+    $queryParams = $request->toQueryParams();
+    expect($queryParams->sort)->toHaveCount(2);
+    expect($queryParams->sort[0]->field)->toBe('created_at');
+    expect($queryParams->sort[0]->direction)->toBe('desc');
+    expect($queryParams->sort[1]->field)->toBe('name');
+    expect($queryParams->sort[1]->direction)->toBe('asc');
+});
+
+test('it rejects filter JSON array when object is required', function (): void {
+    $request = new class() extends ListQueryRequest
+    {
+        protected function primaryJsonApiResource(): string
+        {
+            return ListQueryRequestValidationTestCustomerResource::class;
+        }
+    };
+
+    $request->initialize([
+        'filter' => '[1,2]',
+    ]);
+
+    expect(fn (): array => $request->validateQuery())
+        ->toThrow(ValidationException::class);
+});
+
+test('it rejects include payload containing invalid element types', function (): void {
+    $request = new class() extends ListQueryRequest
+    {
+        protected function primaryJsonApiResource(): string
+        {
+            return ListQueryRequestValidationTestCustomerResource::class;
+        }
+    };
+
+    $request->initialize([
+        'include' => '["addresses", {"invalid": true}]',
+    ]);
+
+    expect(fn (): array => $request->validateQuery())
+        ->toThrow(ValidationException::class);
+});
+
+test('it parses JSON string query params in JsonApiQueryParamsParser with parity', function (): void {
+    $parser = new JsonApiQueryParamsParser();
+    $request = new \Illuminate\Http\Request();
+    $request->query->replace([
+        'sort' => '["-created_at","name"]',
+        'include' => '["addresses"]',
+        'fields' => '{"customers":["name","email"]}',
+        'page' => '{"number":2,"size":25}',
+    ]);
+
+    $queryParams = $parser->parseRequest($request);
+
+    expect($queryParams->sort)->toHaveCount(2);
+    expect($queryParams->includes)->toBe(['addresses']);
+    expect($queryParams->fields)->toBe(['customers' => ['name', 'email']]);
+    expect($queryParams->page)->toBe(2);
+    expect($queryParams->size)->toBe(25);
 });

@@ -15,14 +15,24 @@ final class FilterQueryRule implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $filters = $this->decodeJsonIfString($value, 'filter');
-        if (! is_array($filters)) {
-            $fail('The filter must be an array or a JSON object string.');
+        if (is_string($value) && QuerySyntax::isJsonPayloadString($value)) {
+            $trimmed = trim($value);
+            if (! json_validate($trimmed)) {
+                $fail('The filter parameter contains an invalid JSON string.');
+
+                return;
+            }
+
+            $value = json_decode($trimmed, true);
+        }
+
+        if (! is_array($value) || ! QuerySyntax::isAssociativeArray($value)) {
+            $fail('The filter must be an object or associative array.');
 
             return;
         }
 
-        $normalized = $this->normalizeFilterValues($filters);
+        $normalized = $this->normalizeFilterValues($value);
 
         foreach ($normalized as $key => $filterValue) {
             if (! is_string($key) || ! QuerySyntax::isValidDotIdentifier((string) $key)) {

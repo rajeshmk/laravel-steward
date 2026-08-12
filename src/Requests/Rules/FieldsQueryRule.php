@@ -19,9 +19,18 @@ final readonly class FieldsQueryRule implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $value = QuerySyntax::tryDecodeJson($value);
+        if (is_string($value) && QuerySyntax::isJsonPayloadString($value)) {
+            $trimmed = trim($value);
+            if (! json_validate($trimmed)) {
+                $fail('The fields parameter contains an invalid JSON string.');
 
-        if (! is_array($value)) {
+                return;
+            }
+
+            $value = json_decode($trimmed, true);
+        }
+
+        if (! is_array($value) || ! QuerySyntax::isAssociativeArray($value)) {
             $fail('The fields parameter must be an object keyed by resource type.');
 
             return;
@@ -53,6 +62,12 @@ final readonly class FieldsQueryRule implements ValidationRule
             }
 
             $fields = QuerySyntax::parseStringList($fieldSet);
+            if ($fields === null) {
+                $fail(sprintf('The fields set for %s contains invalid element types.', (string) $type));
+
+                continue;
+            }
+
             $allowed = $this->allowedFields[(string) $type] ?? null;
 
             foreach ($fields as $field) {

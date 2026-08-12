@@ -12,6 +12,17 @@ final class SortQueryRule implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        if (is_string($value) && QuerySyntax::isJsonPayloadString($value)) {
+            $trimmed = trim($value);
+            if (! json_validate($trimmed)) {
+                $fail('The sort parameter contains an invalid JSON string.');
+
+                return;
+            }
+
+            $value = json_decode($trimmed, true);
+        }
+
         if (is_string($value)) {
             $this->validateSortString($value, $fail);
 
@@ -24,12 +35,19 @@ final class SortQueryRule implements ValidationRule
             return;
         }
 
-        $fail('The sort must be a string or array.');
+        $fail('The sort must be a string, array, or JSON string.');
     }
 
     private function validateSortString(string $sort, Closure $fail): void
     {
-        foreach (array_filter(array_map(trim(...), explode(',', $sort))) as $token) {
+        $tokens = array_filter(array_map(trim(...), explode(',', $sort)));
+        if ($tokens === [] && trim($sort) !== '') {
+            $fail('Invalid sort string.');
+
+            return;
+        }
+
+        foreach ($tokens as $token) {
             $field = ltrim($token, '-');
 
             if (! QuerySyntax::isValidDotIdentifier($field)) {

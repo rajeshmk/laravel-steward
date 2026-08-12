@@ -9,24 +9,50 @@ use Hatchyu\Steward\Resources\JsonApiResource;
 trait ResolvesJsonApiResourceMetadata
 {
     /**
-     * @param class-string<JsonApiResource>|null $resourceClass
-     * @param list<string>                       $explicitIncludes
+     * Hook to obtain the primary JsonApiResource class string.
+     * Subclasses or requests may override this method.
+     *
+     * @return class-string<JsonApiResource>|null
+     */
+    protected function primaryJsonApiResource(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Hook for explicit allowed includes.
      *
      * @return list<string>
      */
-    protected function resolveAllowedIncludes(?string $resourceClass = null, array $explicitIncludes = []): array
+    protected function allowedIncludes(): array
     {
-        $explicitIncludes = $explicitIncludes !== []
-            ? $explicitIncludes
-            : (method_exists($this, 'allowedIncludes') ? $this->allowedIncludes() : []);
+        return [];
+    }
+
+    /**
+     * Hook for explicit allowed fieldsets.
+     *
+     * @return array<string, list<string>>
+     */
+    protected function allowedFields(): array
+    {
+        return [];
+    }
+
+    /**
+     * Resolve allowed includes from explicit array or JsonApiResource metadata.
+     *
+     * @return list<string>
+     */
+    protected function resolvedAllowedIncludes(): array
+    {
+        $explicitIncludes = $this->allowedIncludes();
 
         if ($explicitIncludes !== []) {
             return array_values(array_unique($explicitIncludes));
         }
 
-        $resourceClass ??= method_exists($this, 'primaryJsonApiResource')
-            ? $this->primaryJsonApiResource()
-            : (method_exists($this, 'jsonApiResource') ? $this->jsonApiResource() : null);
+        $resourceClass = $this->primaryJsonApiResource();
 
         if (! is_string($resourceClass) || ! is_subclass_of($resourceClass, JsonApiResource::class)) {
             return [];
@@ -36,45 +62,24 @@ trait ResolvesJsonApiResourceMetadata
     }
 
     /**
-     * @param class-string<JsonApiResource>|null $resourceClass
-     * @param array<string, list<string>>        $explicitFields
+     * Resolve allowed fields from explicit array or JsonApiResource metadata.
      *
      * @return array<string, list<string>>
      */
-    protected function resolveAllowedFields(?string $resourceClass = null, array $explicitFields = []): array
+    protected function resolvedAllowedFields(): array
     {
-        $explicitFields = $explicitFields !== []
-            ? $explicitFields
-            : (method_exists($this, 'allowedFields') ? $this->allowedFields() : []);
+        $explicitFields = $this->allowedFields();
 
         if ($explicitFields !== []) {
             return $explicitFields;
         }
 
-        $resourceClass ??= method_exists($this, 'primaryJsonApiResource')
-            ? $this->primaryJsonApiResource()
-            : (method_exists($this, 'jsonApiResource') ? $this->jsonApiResource() : null);
+        $resourceClass = $this->primaryJsonApiResource();
 
         if (! is_string($resourceClass) || ! is_subclass_of($resourceClass, JsonApiResource::class)) {
             return [];
         }
 
         return $resourceClass::jsonApiAllowedFieldsets();
-    }
-
-    /**
-     * @return list<string>
-     */
-    protected function resolvedAllowedIncludes(): array
-    {
-        return $this->resolveAllowedIncludes();
-    }
-
-    /**
-     * @return array<string, list<string>>
-     */
-    protected function resolvedAllowedFields(): array
-    {
-        return $this->resolveAllowedFields();
     }
 }
