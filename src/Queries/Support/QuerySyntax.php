@@ -49,4 +49,35 @@ final class QuerySyntax
 
         return $value;
     }
+
+    /**
+     * Normalizes a comma-separated string, JSON array string, or PHP array into a list of trimmed non-empty strings.
+     *
+     * @return list<string>
+     */
+    public static function parseStringList(mixed $value): array
+    {
+        $value = self::tryDecodeJson($value);
+
+        if (is_string($value)) {
+            $value = explode(',', $value);
+        }
+
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach ($value as $item) {
+            if (is_scalar($item) && $item !== null) {
+                $str = trim((string) $item);
+                if ($str !== '') {
+                    $result[] = $str;
+                }
+            }
+        }
+
+        return array_values(array_unique($result));
+    }
 }

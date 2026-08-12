@@ -35,28 +35,11 @@ trait NormalizesQueryParams
     {
         $value = $this->decodeJsonIfString($value, $paramName);
 
-        if (is_string($value)) {
-            $value = explode(',', $value);
-        }
-
-        if (! is_array($value)) {
+        if (! is_string($value) && ! is_array($value)) {
             return null;
         }
 
-        $result = [];
-
-        foreach ($value as $item) {
-            if (! is_scalar($item) && $item !== null) {
-                return null;
-            }
-
-            $str = trim((string) $item);
-            if ($str !== '') {
-                $result[] = $str;
-            }
-        }
-
-        return array_values(array_unique($result));
+        return QuerySyntax::parseStringList($value);
     }
 
     /**

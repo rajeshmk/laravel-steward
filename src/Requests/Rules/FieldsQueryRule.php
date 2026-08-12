@@ -52,10 +52,7 @@ final readonly class FieldsQueryRule implements ValidationRule
                 continue;
             }
 
-            $fields = is_array($fieldSet)
-                ? array_values(array_filter(array_map(static fn (mixed $f): string => trim((string) $f), $fieldSet)))
-                : array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
-
+            $fields = QuerySyntax::parseStringList($fieldSet);
             $allowed = $this->allowedFields[(string) $type] ?? null;
 
             foreach ($fields as $field) {

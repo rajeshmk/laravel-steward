@@ -27,9 +27,7 @@ final readonly class IncludeQueryRule implements ValidationRule
             return;
         }
 
-        $includes = is_array($value)
-            ? array_values(array_filter(array_map(static fn (mixed $i): string => trim((string) $i), $value)))
-            : array_values(array_filter(array_map(trim(...), explode(',', $value))));
+        $includes = QuerySyntax::parseStringList($value);
 
         if ($includes !== [] && $this->allowedIncludes === []) {
             $fail('Includes are not supported for this request.');
