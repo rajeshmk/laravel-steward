@@ -15,10 +15,22 @@ final class PageQueryRule implements ValidationRule
             return;
         }
 
-        if (is_string($value) && ctype_digit($value) && (int) $value > 0) {
-            return;
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if (str_starts_with($trimmed, '{')) {
+                if (json_validate($trimmed)) {
+                    $decoded = json_decode($trimmed, true);
+                    if (is_array($decoded)) {
+                        return;
+                    }
+                }
+            }
+
+            if (ctype_digit($trimmed) && (int) $trimmed > 0) {
+                return;
+            }
         }
 
-        $fail('The page must be a positive integer or an object with number/size.');
+        $fail('The page must be a positive integer, an object with number/size, or a JSON object string.');
     }
 }
