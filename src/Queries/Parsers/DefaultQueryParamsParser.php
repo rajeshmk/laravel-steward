@@ -37,10 +37,12 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
         $sort = $this->normalizeSort($params['sort'] ?? null, $hasSort);
         $includes = $this->normalizeIncludes($params['include'] ?? null, $hasInclude);
         $fields = $this->normalizeFields($params['fields'] ?? null, $hasFields);
-        $cursor = $this->normalizeCursor($params['cursor'] ?? ($params['page']['cursor'] ?? null));
+
+        $pageParam = $this->decodeJsonIfString($params['page'] ?? null, 'page');
+        $cursor = $this->normalizeCursor($params['cursor'] ?? (is_array($pageParam) ? ($pageParam['cursor'] ?? null) : null));
 
         [$page, $size] = $this->normalizePagination(
-            $params['page'] ?? null,
+            $pageParam,
             $params['size'] ?? null
         );
 
@@ -54,6 +56,24 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
             size: $size,
             cursor: $cursor,
         );
+    }
+
+    private function decodeJsonIfString(mixed $value, string $paramName): mixed
+    {
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if (str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[')) {
+                if (! json_validate($trimmed)) {
+                    throw ValidationException::withMessages([
+                        $paramName => sprintf('The %s parameter contains an invalid JSON string.', $paramName),
+                    ]);
+                }
+
+                return json_decode($trimmed, true);
+            }
+        }
+
+        return $value;
     }
 
     private function normalizeCursor(mixed $cursor): ?string
@@ -83,22 +103,14 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
      */
     private function normalizeFilters(mixed $filters, bool $provided): array
     {
+        $filters = $this->decodeJsonIfString($filters, 'filter');
         $normalized = [];
 
         if (is_array($filters)) {
             $normalized = $filters;
-        } elseif (is_string($filters)) {
-            $decoded = json_decode($filters, true);
-            if (is_array($decoded)) {
-                $normalized = $decoded;
-            } elseif ($provided) {
-                throw ValidationException::withMessages([
-                    'filter' => 'The filter must be an array or a JSON object string.',
-                ]);
-            }
         } elseif ($provided) {
             throw ValidationException::withMessages([
-                'filter' => 'The filter must be an array.',
+                'filter' => 'The filter must be an array or a JSON object string.',
             ]);
         }
 
@@ -135,6 +147,8 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
      */
     private function normalizeSort(mixed $sort, bool $provided): array
     {
+        $sort = $this->decodeJsonIfString($sort, 'sort');
+
         if (is_string($sort)) {
             return $this->parseSortString($sort);
         }
@@ -223,21 +237,25 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
      */
     private function normalizeIncludes(mixed $include, bool $provided): array
     {
+        $include = $this->decodeJsonIfString($include, 'include');
+
         if ($include === null || $include === '') {
             return [];
         }
 
-        if (! is_string($include)) {
+        if (is_array($include)) {
+            $includes = array_values(array_filter(array_map(static fn (mixed $i): string => trim((string) $i), $include)));
+        } elseif (is_string($include)) {
+            $includes = array_values(array_filter(array_map(trim(...), explode(',', $include))));
+        } else {
             if ($provided) {
                 throw ValidationException::withMessages([
-                    'include' => 'The include must be a comma-separated string.',
+                    'include' => 'The include must be a comma-separated string or array.',
                 ]);
             }
 
             return [];
         }
-
-        $includes = array_values(array_filter(array_map(trim(...), explode(',', $include))));
 
         foreach ($includes as $path) {
             if (! preg_match('/^[A-Za-z_][A-Za-z0-9_\.]*$/', $path)) {
@@ -255,6 +273,8 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
      */
     private function normalizeFields(mixed $fields, bool $provided): array
     {
+        $fields = $this->decodeJsonIfString($fields, 'fields');
+
         if ($fields === null) {
             return [];
         }
@@ -278,13 +298,15 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
                 ]);
             }
 
-            if (! is_string($fieldSet)) {
+            if (is_array($fieldSet)) {
+                $fieldNames = array_values(array_filter(array_map(static fn (mixed $f): string => trim((string) $f), $fieldSet)));
+            } elseif (is_string($fieldSet)) {
+                $fieldNames = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
+            } else {
                 throw ValidationException::withMessages([
-                    'fields' => sprintf('The fields set for %s must be a comma-separated string.', $type),
+                    'fields' => sprintf('The fields set for %s must be a string or list of strings.', $type),
                 ]);
             }
-
-            $fieldNames = array_values(array_filter(array_map(trim(...), explode(',', $fieldSet))));
 
             foreach ($fieldNames as $fieldName) {
                 if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $fieldName)) {
@@ -305,6 +327,8 @@ final readonly class DefaultQueryParamsParser implements QueryParamsParserContra
      */
     private function normalizePagination(mixed $page, mixed $size): array
     {
+        $page = $this->decodeJsonIfString($page, 'page');
+
         if (is_array($page)) {
             $size = $page['size'] ?? $size;
             $page = $page['number'] ?? 1;

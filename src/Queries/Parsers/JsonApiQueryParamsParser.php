@@ -39,13 +39,15 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
             ]);
         }
 
+        $pageParam = $this->decodeJsonIfString($params['page'] ?? null, 'page');
         $filters = $this->normalizeFilters($params['filter'] ?? null, array_key_exists('filter', $params));
         $search = $this->normalizeSearch($params['search'] ?? null, $filters);
         $sort = $this->normalizeSort($params['sort'] ?? null, array_key_exists('sort', $params));
         $includes = $this->normalizeIncludes($params['include'] ?? null, array_key_exists('include', $params));
         $fields = $this->normalizeFields($params['fields'] ?? null, array_key_exists('fields', $params));
-        $cursor = $this->normalizeCursor($params['page']['cursor'] ?? null);
-        [$page, $size] = $this->normalizePagination($params['page'] ?? null, array_key_exists('page', $params));
+
+        $cursor = $this->normalizeCursor(is_array($pageParam) ? ($pageParam['cursor'] ?? null) : null);
+        [$page, $size] = $this->normalizePagination($pageParam, array_key_exists('page', $params));
 
         return new QueryParams(
             search: $search,
@@ -57,6 +59,24 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
             size: $size,
             cursor: $cursor,
         );
+    }
+
+    private function decodeJsonIfString(mixed $value, string $paramName): mixed
+    {
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if (str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[')) {
+                if (! json_validate($trimmed)) {
+                    throw ValidationException::withMessages([
+                        $paramName => sprintf('The %s parameter contains an invalid JSON string.', $paramName),
+                    ]);
+                }
+
+                return json_decode($trimmed, true);
+            }
+        }
+
+        return $value;
     }
 
     private function normalizeCursor(mixed $cursor): ?string
@@ -97,22 +117,14 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
      */
     private function normalizeFilters(mixed $filters, bool $provided): array
     {
+        $filters = $this->decodeJsonIfString($filters, 'filter');
         $normalized = [];
 
         if (is_array($filters)) {
             $normalized = $filters;
-        } elseif (is_string($filters)) {
-            $decoded = json_decode($filters, true);
-            if (is_array($decoded)) {
-                $normalized = $decoded;
-            } elseif ($provided) {
-                throw ValidationException::withMessages([
-                    'filter' => 'The filter must be an object or a JSON object string.',
-                ]);
-            }
         } elseif ($provided) {
             throw ValidationException::withMessages([
-                'filter' => 'The filter must be an object.',
+                'filter' => 'The filter must be an object or a JSON object string.',
             ]);
         }
 
@@ -257,6 +269,8 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
      */
     private function normalizeFields(mixed $fields, bool $provided): array
     {
+        $fields = $this->decodeJsonIfString($fields, 'fields');
+
         if ($fields === null) {
             return [];
         }
@@ -307,7 +321,9 @@ final readonly class JsonApiQueryParamsParser implements QueryParamsParserContra
      */
     private function normalizePagination(mixed $page, bool $provided): array
     {
-        if (! $provided) {
+        $page = $this->decodeJsonIfString($page, 'page');
+
+        if (! $provided && $page === null) {
             return [1, $this->defaultSize];
         }
 

@@ -6,7 +6,6 @@ use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
 use Illuminate\Validation\ValidationException;
 use Hatchyu\Steward\Tests\TestCase;
 
-
 test('it parses flat filter query params', function (): void {
     $parser = new DefaultQueryParamsParser();
 
@@ -45,6 +44,30 @@ test('it parses sparse fieldsets', function (): void {
     expect($params->fields)->toBe([
         'customers' => ['name', 'email'],
     ]);
+});
+
+test('it parses JSON string query parameters universally for page, sort, fields, and filter', function (): void {
+    $parser = new DefaultQueryParamsParser();
+
+    $params = $parser->parse([
+        'filter' => '{"is_active":true,"gender":"female"}',
+        'sort' => '["-created_at","name"]',
+        'fields' => '{"customers":["name","email"]}',
+        'page' => '{"number":3,"size":25}',
+    ]);
+
+    expect($params->filters)->toBe([
+        'is_active' => true,
+        'gender' => 'female',
+    ])
+        ->and($params->sort[0]->field)->toBe('created_at')
+        ->and($params->sort[0]->direction)->toBe('desc')
+        ->and($params->sort[1]->field)->toBe('name')
+        ->and($params->sort[1]->direction)->toBe('asc')
+        ->and($params->fields)->toBe(['customers' => ['name', 'email']])
+        ->and($params->page)->toBe(3)
+        ->and($params->size)->toBe(25)
+    ;
 });
 
 test('it rejects malformed sparse field names', function (): void {

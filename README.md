@@ -117,11 +117,10 @@ Notes:
 | :--- | :--- | :--- | :--- |
 | `search` | `string` | `?search=john` | Free-text search string. In JSON:API format, `?filter[search]=john` is also supported. |
 | `filter` | `array\|string` | Single value: `?filter[status]=active`<br>Comma-separated: `?filter[id]=1,2,3,4,5`<br>Array list: `?filter[id][]=1&filter[id][]=2`<br>JSON string: `?filter={"status":"active"}` | Filter criteria. Supports single scalars, array lists, comma-separated strings (`1,2,3`), or JSON object strings. |
-| `sort` | `string\|array` | `?sort=-created_at,name` | Comma-separated string or array. Prefix `-` denotes descending order (`desc`). |
+| `sort` | `string\|array` | Comma-separated: `?sort=-created_at,name`<br>JSON array: `?sort=["-created_at","name"]` | Comma-separated string, array list, or JSON array string. Prefix `-` denotes descending order (`desc`). |
 | `include` | `string` | `?include=addresses,orders.items` | Comma-separated list of relationship inclusion paths. |
-| `fields` | `array` | `?fields[customers]=name,email` | Object keyed by JSON:API resource type specifying sparse fieldsets. |
-| `page[number]` | `integer` | `?page[number]=2` | Page number for offset pagination (1-indexed, minimum `1`). |
-| `page[size]` | `integer` | `?page[size]=25` | Number of records per page (minimum `1`, maximum `100`). |
+| `fields` | `array\|string` | Bracket object: `?fields[customers]=name,email`<br>JSON object: `?fields={"customers":["name","email"]}` | Object keyed by JSON:API resource type specifying sparse fieldsets. Supports bracket syntax or JSON object strings. |
+| `page` | `array\|string\|integer` | Plain: `?page=2&size=25`<br>JSON:API: `?page[number]=2&page[size]=25`<br>JSON object: `?page={"number":2,"size":25}` | Offset or cursor pagination parameters. Supports plain scalar, bracket syntax, or JSON object strings. |
 | `page[cursor]` | `string` | `?page[cursor]=eyJpZCI6MTB9` | Cursor token string for cursor-based pagination. |
 | `size` | `integer` | `?size=25` | Top-level fallback parameter for page size. |
 
