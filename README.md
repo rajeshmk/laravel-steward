@@ -78,9 +78,13 @@ Plain format example:
 GET /customers?search=alice&filter[is_active]=1&sort=-created_at&page=2&size=25
 ```
 
-Plain format also accepts `filter` as a JSON object string:
+Plain format also accepts `filter` as a JSON object string (unencoded / URL-encoded):
 
 ```http
+# Unencoded (Readable JSON string)
+GET /customers?filter={"is_active":1,"gender":"female"}
+
+# URL-encoded (Standard HTTP client payload)
 GET /customers?filter=%7B%22is_active%22%3A1%2C%22gender%22%3A%22female%22%7D
 ```
 
@@ -93,6 +97,10 @@ GET /customers?filter[search]=alice&sort=-created_at&page[number]=2&page[size]=2
 JSON:API format also accepts `filter` as a JSON object string:
 
 ```http
+# Unencoded (Readable JSON string)
+GET /customers?filter={"search":"alice","is_active":1}&sort=-created_at&page[number]=2&page[size]=25
+
+# URL-encoded (Standard HTTP client payload)
 GET /customers?filter=%7B%22search%22%3A%22alice%22%2C%22is_active%22%3A1%7D&sort=-created_at&page[number]=2&page[size]=25
 ```
 
@@ -108,7 +116,7 @@ Notes:
 | Parameter | Type | Format / Example | Description |
 | :--- | :--- | :--- | :--- |
 | `search` | `string` | `?search=john` | Free-text search string. In JSON:API format, `?filter[search]=john` is also supported. |
-| `filter` | `array\|string` | `?filter[status]=active` or `?filter[id]=1,2,3,4,5` | Filter criteria. Supports single values, arrays (`filter[id][]=1`), comma-separated list (`filter[id]=1,2,3`), or JSON strings. |
+| `filter` | `array\|string` | Single value: `?filter[status]=active`<br>Comma-separated: `?filter[id]=1,2,3,4,5`<br>Array list: `?filter[id][]=1&filter[id][]=2`<br>JSON string: `?filter={"status":"active"}` | Filter criteria. Supports single scalars, array lists, comma-separated strings (`1,2,3`), or JSON object strings. |
 | `sort` | `string\|array` | `?sort=-created_at,name` | Comma-separated string or array. Prefix `-` denotes descending order (`desc`). |
 | `include` | `string` | `?include=addresses,orders.items` | Comma-separated list of relationship inclusion paths. |
 | `fields` | `array` | `?fields[customers]=name,email` | Object keyed by JSON:API resource type specifying sparse fieldsets. |
