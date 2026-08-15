@@ -79,6 +79,32 @@ final class JsonApiQueryParamsParser extends AbstractQueryParamsParser
     }
 
     /**
+     * @param array<string, mixed> $params
+     * @return list<\Hatchyu\Steward\Queries\Params\SortField>
+     */
+    protected function extractSort(array $params): array
+    {
+        if (array_key_exists('sort', $params) && ! is_string($params['sort']) && $params['sort'] !== null) {
+            throw ValidationException::withMessages(['sort' => 'The sort parameter must be a string.']);
+        }
+
+        return parent::extractSort($params);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return list<string>
+     */
+    protected function extractIncludes(array $params): array
+    {
+        if (array_key_exists('include', $params) && ! is_string($params['include']) && $params['include'] !== null) {
+            throw ValidationException::withMessages(['include' => 'The include parameter must be a string.']);
+        }
+
+        return parent::extractIncludes($params);
+    }
+
+    /**
      * @param array<mixed> $page
      */
     private function assertPageObject(array $page): void
