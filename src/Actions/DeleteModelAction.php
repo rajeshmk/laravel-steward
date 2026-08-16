@@ -31,11 +31,29 @@ abstract class DeleteModelAction extends AbstractModelAction
     /**
      * @param TModel $model
      */
+    protected function beforeDelete(Model $model): void
+    {
+        // Hook for subclasses.
+    }
+
+    /**
+     * @param TModel $model
+     */
+    protected function afterDelete(Model $model): void
+    {
+        // Hook for subclasses.
+    }
+
+    /**
+     * @param TModel $model
+     */
     final public function executeModel(Model $model): void
     {
         if (! $this->isExpectedPersistedModel($model)) {
             throw new DeleteModelException('The supplied model is not valid for this action.');
         }
+
+        $this->beforeDelete($model);
 
         $this->transaction(function () use ($model): void {
             try {
@@ -50,5 +68,7 @@ abstract class DeleteModelAction extends AbstractModelAction
                 throw new DeleteModelException();
             }
         });
+
+        $this->afterDelete($model);
     }
 }
