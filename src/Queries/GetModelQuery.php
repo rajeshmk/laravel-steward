@@ -11,7 +11,7 @@ use Hatchyu\Steward\Queries\Criteria\Sorts\AbstractSort;
 use Hatchyu\Steward\Queries\Params\QueryDefinition;
 use Hatchyu\Steward\Queries\Params\QueryParams;
 use Hatchyu\Steward\Resources\Concerns\ResolvesJsonApiResourceMetadata;
-use Hatchyu\Steward\Resources\JsonApiResource;
+use Hatchyu\Steward\Resources\StewardResource;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -272,7 +272,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
         $resource = $this->jsonApiResource();
 
-        if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
+        if (! is_string($resource) || ! is_subclass_of($resource, StewardResource::class)) {
             // Includes were checked against allowedIncludes() before reaching
             // this point.
             return $query->with($params->includes);
@@ -315,7 +315,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
         $resource = $this->jsonApiResource();
 
-        if (! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
+        if (! is_string($resource) || ! is_subclass_of($resource, StewardResource::class)) {
             throw ValidationException::withMessages([
                 'fields' => 'Sparse fieldsets are not supported for this query.',
             ]);
@@ -348,7 +348,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     {
         $resource = $this->jsonApiResource();
 
-        if ($params->fields === [] || ! is_string($resource) || ! is_subclass_of($resource, JsonApiResource::class)) {
+        if ($params->fields === [] || ! is_string($resource) || ! is_subclass_of($resource, StewardResource::class)) {
             return $query;
         }
 
@@ -437,7 +437,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param Builder<Model> $builder
-     * @param class-string<JsonApiResource> $resource
+     * @param class-string<StewardResource> $resource
      * @param Relation<Model, Model, mixed> $relation
      * @param list<string> $nestedIncludes
      */

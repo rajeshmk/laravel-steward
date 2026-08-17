@@ -11,7 +11,7 @@ use Hatchyu\Steward\Requests\Rules\PageQueryRule;
 use Hatchyu\Steward\Requests\Rules\SortQueryRule;
 use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Resources\Concerns\ResolvesJsonApiResourceMetadata;
-use Hatchyu\Steward\Resources\JsonApiResource;
+use Hatchyu\Steward\Resources\StewardResource;
 use Override;
 
 abstract class ListQueryRequest extends BaseQueryRequest
@@ -56,7 +56,7 @@ abstract class ListQueryRequest extends BaseQueryRequest
     }
 
     /**
-     * @return class-string<JsonApiResource>|null
+     * @return class-string<StewardResource>|null
      */
     protected function primaryJsonApiResource(): ?string
     {

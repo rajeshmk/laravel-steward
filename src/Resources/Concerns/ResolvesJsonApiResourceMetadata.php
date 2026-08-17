@@ -4,19 +4,29 @@ declare(strict_types=1);
 
 namespace Hatchyu\Steward\Resources\Concerns;
 
-use Hatchyu\Steward\Resources\JsonApiResource;
+use Hatchyu\Steward\Resources\StewardResource;
 
 trait ResolvesJsonApiResourceMetadata
 {
     /**
-     * Hook to obtain the primary JsonApiResource class string.
+     * Hook to obtain the primary StewardResource class string.
      * Subclasses or requests may override this method.
      *
-     * @return class-string<JsonApiResource>|null
+     * @return class-string<StewardResource>|null
      */
-    protected function primaryJsonApiResource(): ?string
+    protected function primaryStewardResource(): ?string
     {
         return null;
+    }
+
+    protected function primaryJsonApiResource(): ?string
+    {
+        return $this->primaryStewardResource();
+    }
+
+    protected function resolvedPrimaryResource(): ?string
+    {
+        return $this->primaryStewardResource() ?? $this->primaryJsonApiResource();
     }
 
     /**
@@ -40,7 +50,7 @@ trait ResolvesJsonApiResourceMetadata
     }
 
     /**
-     * Resolve allowed includes from explicit array or JsonApiResource metadata.
+     * Resolve allowed includes from explicit array or StewardResource metadata.
      *
      * @return list<string>
      */
@@ -52,9 +62,9 @@ trait ResolvesJsonApiResourceMetadata
             return array_values(array_unique($explicitIncludes));
         }
 
-        $resourceClass = $this->primaryJsonApiResource();
+        $resourceClass = $this->resolvedPrimaryResource();
 
-        if (! is_string($resourceClass) || ! is_subclass_of($resourceClass, JsonApiResource::class)) {
+        if (! is_string($resourceClass) || ! is_subclass_of($resourceClass, StewardResource::class)) {
             return [];
         }
 
@@ -62,7 +72,7 @@ trait ResolvesJsonApiResourceMetadata
     }
 
     /**
-     * Resolve allowed fields from explicit array or JsonApiResource metadata.
+     * Resolve allowed fields from explicit array or StewardResource metadata.
      *
      * @return array<string, list<string>>
      */
@@ -74,9 +84,9 @@ trait ResolvesJsonApiResourceMetadata
             return $explicitFields;
         }
 
-        $resourceClass = $this->primaryJsonApiResource();
+        $resourceClass = $this->resolvedPrimaryResource();
 
-        if (! is_string($resourceClass) || ! is_subclass_of($resourceClass, JsonApiResource::class)) {
+        if (! is_string($resourceClass) || ! is_subclass_of($resourceClass, StewardResource::class)) {
             return [];
         }
 

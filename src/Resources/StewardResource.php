@@ -4,20 +4,99 @@ declare(strict_types=1);
 
 namespace Hatchyu\Steward\Resources;
 
+use Hatchyu\Steward\Http\ApiResponseFormat;
+use Hatchyu\Steward\Http\ApiResponseFormatResolver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Override;
 
-abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonApiResource
+abstract class StewardResource extends \Illuminate\Http\Resources\JsonApi\JsonApiResource
 {
-    abstract public static function jsonApiResourceType(): string;
+    /**
+     * The resource type string (defaults to kebab-case plural of class basename without 'Resource').
+     */
+    public static function resourceType(): string
+    {
+        $className = class_basename(static::class);
+        $baseName = Str::beforeLast($className, 'Resource');
+
+        return Str::kebab(Str::pluralStudly($baseName));
+    }
+
+    /**
+     * Allowed fields for sparse fieldsets.
+     *
+     * @return list<string>
+     */
+    public static function allowedFields(): array
+    {
+        return [];
+    }
+
+    /**
+     * Map of resource field names to database column names.
+     *
+     * @return array<string, list<string>>
+     */
+    public static function fieldColumnMap(): array
+    {
+        $map = [];
+
+        foreach (static::allowedFields() as $field) {
+            $map[$field] = [$field];
+        }
+
+        return $map;
+    }
+
+    /**
+     * Allowed relationship inclusion paths.
+     *
+     * @return array<string, class-string<self>>
+     */
+    protected static function allowedIncludes(): array
+    {
+        return [];
+    }
+
+    /**
+     * Resource attributes payload.
+     *
+     * @return array<string, mixed>
+     */
+    public function toAttributes(Request $request): array
+    {
+        if ($this->resource instanceof Model) {
+            return $this->resource->attributesToArray();
+        }
+
+        return [];
+    }
+
+    /**
+     * JSON:API relationships mapping (defaults to allowedIncludes()).
+     *
+     * @return array<int|string, mixed>
+     */
+    public function toRelationships(Request $request): array
+    {
+        return static::allowedIncludes();
+    }
+
+    // Helper compatibility aliases for Steward Query Parsers & Validators
+    public static function jsonApiResourceType(): string
+    {
+        return static::resourceType();
+    }
 
     /**
      * @return list<string>
      */
     public static function jsonApiAllowedFields(): array
     {
-        return [];
+        return static::allowedFields();
     }
 
     /**
@@ -25,13 +104,15 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
      */
     public static function jsonApiFieldColumnMap(): array
     {
-        $map = [];
+        return static::fieldColumnMap();
+    }
 
-        foreach (static::jsonApiAllowedFields() as $field) {
-            $map[$field] = [$field];
-        }
-
-        return $map;
+    /**
+     * @return array<int|string, mixed>
+     */
+    protected static function jsonApiIncludeResources(): array
+    {
+        return static::allowedIncludes();
     }
 
     public function toId(Request $request): ?string
@@ -45,25 +126,7 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
 
     public function toType(Request $request): ?string
     {
-        return $this->jsonApiType($request);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    #[Override]
-    public function toAttributes(Request $request): array
-    {
-        return $this->jsonApiAttributes($request);
-    }
-
-    /**
-     * @return array<int|string, mixed>
-     */
-    #[Override]
-    public function toRelationships(Request $request): array
-    {
-        return $this->jsonApiRelationships($request);
+        return static::resourceType();
     }
 
     /**
@@ -77,7 +140,7 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
 
         $includes = [];
 
-        foreach (static::jsonApiIncludeResources() as $relation => $resourceClass) {
+        foreach (static::allowedIncludes() as $relation => $resourceClass) {
             if (! is_string($relation) || ! is_string($resourceClass) || ! is_subclass_of($resourceClass, self::class)) {
                 continue;
             }
@@ -104,10 +167,10 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
         }
 
         $fieldsets = [
-            static::jsonApiResourceType() => static::jsonApiAllowedFields(),
+            static::resourceType() => static::allowedFields(),
         ];
 
-        foreach (static::jsonApiIncludeResources() as $resourceClass) {
+        foreach (static::allowedIncludes() as $resourceClass) {
             if (! is_string($resourceClass) || ! is_subclass_of($resourceClass, self::class)) {
                 continue;
             }
@@ -128,7 +191,7 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
         $resource = static::class;
 
         foreach (array_filter(explode('.', $path)) as $segment) {
-            $includes = $resource::jsonApiIncludeResources();
+            $includes = $resource::allowedIncludes();
             $next = $includes[$segment] ?? null;
 
             if (! is_string($next) || ! is_subclass_of($next, self::class)) {
@@ -141,36 +204,10 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
         return $resource;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    abstract protected function jsonApiAttributes(Request $request): array;
-
-    /**
-     * @return array<int|string, mixed>
-     */
-    protected static function jsonApiIncludeResources(): array
-    {
-        return [];
-    }
-
-    protected function jsonApiType(Request $request): string
-    {
-        return static::jsonApiResourceType();
-    }
-
-    /**
-     * @return array<int|string, mixed>
-     */
-    protected function jsonApiRelationships(Request $request): array
-    {
-        return static::jsonApiIncludeResources();
-    }
-
     #[Override]
     public function toArray(Request $request): array
     {
-        if (\Hatchyu\Steward\Http\ApiResponseFormatResolver::resolve($request) === \Hatchyu\Steward\Http\ApiResponseFormat::REST) {
+        if (ApiResponseFormatResolver::resolve($request) === ApiResponseFormat::REST) {
             return $this->toRestArray($request);
         }
 
@@ -183,7 +220,7 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
     protected function toRestArray(Request $request): array
     {
         $id = $this->toId($request);
-        $attributes = $this->jsonApiAttributes($request);
+        $attributes = $this->toAttributes($request);
 
         $rest = [];
         if ($id !== null) {
@@ -192,7 +229,7 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
 
         $rest = array_merge($rest, $attributes);
 
-        foreach (static::jsonApiIncludeResources() as $relation => $resourceClass) {
+        foreach (static::allowedIncludes() as $relation => $resourceClass) {
             if (is_string($relation) && $this->resource instanceof Model && $this->resource->relationLoaded($relation)) {
                 $related = $this->resource->getRelation($relation);
                 if ($related !== null) {
@@ -213,7 +250,7 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
     #[Override]
     public function with($request)
     {
-        if (\Hatchyu\Steward\Http\ApiResponseFormatResolver::resolve($request) === \Hatchyu\Steward\Http\ApiResponseFormat::REST) {
+        if (ApiResponseFormatResolver::resolve($request) === ApiResponseFormat::REST) {
             return [];
         }
 
@@ -227,9 +264,9 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
     }
 
     #[Override]
-    public function withResponse(Request $request, \Illuminate\Http\JsonResponse $response): void
+    public function withResponse(Request $request, JsonResponse $response): void
     {
-        if (\Hatchyu\Steward\Http\ApiResponseFormatResolver::resolve($request) === \Hatchyu\Steward\Http\ApiResponseFormat::JSON_API) {
+        if (ApiResponseFormatResolver::resolve($request) === ApiResponseFormat::JSON_API) {
             $response->header('Content-Type', 'application/vnd.api+json');
         } else {
             $response->header('Content-Type', 'application/json');
