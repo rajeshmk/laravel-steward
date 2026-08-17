@@ -211,6 +211,22 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
     }
 
     #[Override]
+    public function with($request)
+    {
+        if (\Hatchyu\Steward\Http\ApiResponseFormatResolver::resolve($request) === \Hatchyu\Steward\Http\ApiResponseFormat::REST) {
+            return [];
+        }
+
+        return parent::with($request);
+    }
+
+    #[Override]
+    protected static function newCollection($resource)
+    {
+        return new AnonymousResourceCollection($resource, static::class);
+    }
+
+    #[Override]
     public function withResponse(Request $request, \Illuminate\Http\JsonResponse $response): void
     {
         if (\Hatchyu\Steward\Http\ApiResponseFormatResolver::resolve($request) === \Hatchyu\Steward\Http\ApiResponseFormat::JSON_API) {

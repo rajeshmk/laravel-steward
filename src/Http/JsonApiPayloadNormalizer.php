@@ -35,13 +35,16 @@ final class JsonApiPayloadNormalizer
 
         if (isset($rawResource['relationships']) && is_array($rawResource['relationships'])) {
             foreach ($rawResource['relationships'] as $relationName => $relationData) {
-                if (! is_array($relationData) || ! isset($relationData['data'])) {
+                if (! is_array($relationData) || ! array_key_exists('data', $relationData)) {
                     continue;
                 }
 
                 $relData = $relationData['data'];
 
-                if (is_array($relData) && array_is_list($relData)) {
+                if ($relData === null) {
+                    $normalized[$relationName . '_id'] = null;
+                    $normalized[$relationName] = null;
+                } elseif (is_array($relData) && array_is_list($relData)) {
                     $normalized[$relationName] = array_values(array_filter(array_map(
                         static fn ($item): mixed => is_array($item) ? ($item['id'] ?? null) : null,
                         $relData
