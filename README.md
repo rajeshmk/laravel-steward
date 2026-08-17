@@ -425,6 +425,43 @@ That same resource metadata also powers conservative sparse-field projection for
 
 If needed, you can still override `allowedIncludes()` and `allowedFields()` directly.
 
+## Dual REST & JSON:API Format Support Engine
+
+`laravel-steward` provides a built-in, configurable dual format engine supporting both **Standard REST** and **JSON:API** formats for incoming write payloads and outgoing HTTP responses transparently.
+
+### 1. Format Resolution (`ApiResponseFormatResolver`)
+
+The outgoing format is determined dynamically per HTTP request:
+
+1. **Forced Middleware Attribute**: Handled via `steward_api_response_format` request attribute.
+2. **Query Parameter**: e.g., `?format=jsonapi` or `?format=rest` (configurable key in `steward.api.query_parameter`).
+3. **HTTP Accept Header**: `Accept: application/vnd.api+json` yields JSON:API format.
+4. **Configuration Default**: Falls back to `config('steward.api.default_format', 'rest')`.
+
+### 2. Payload Normalization (`JsonApiPayloadNormalizer`)
+
+Incoming write payloads (`POST`, `PUT`, `PATCH`) are processed in `BaseActionRequest::prepareForValidation()`:
+
+- **REST Payloads** (`{ "name": "Acme Corp" }`) pass through unmodified.
+- **JSON:API Payloads** (`{ "data": { "attributes": { "name": "Acme Corp" }, "relationships": { "roles": { "data": [{ "type": "roles", "id": "admin" }] } } } }`) are automatically normalized into flat validated attributes (`['name' => 'Acme Corp', 'roles' => ['admin']]`).
+- **Null Relationships** (`{ "data": { "relationships": { "company": { "data": null } } } }`) are converted to `company_id => null` to cleanly disassociate relationships.
+
+This allows Form Requests (`BaseActionRequest`), `AbstractData` DTOs, and CQRS Actions to remain **100% format-agnostic**.
+
+### 3. Dual Response Formatting (`JsonApiResource` & `AnonymousResourceCollection`)
+
+Extending `JsonApiResource` automatically renders:
+
+- **REST Mode** (Default): `{ "id": 1, "name": "Acme Corp" }` with `Content-Type: application/json`.
+- **JSON:API Mode**: Full JSON:API document (`data`, `relationships`, `included`, `meta`) with `Content-Type: application/vnd.api+json`.
+
+Both single resources and collections (`CustomerResource::collection($customers)`) automatically set the matching `Content-Type` header via `AnonymousResourceCollection`.
+
+### 4. Format Enforcement Middleware
+
+- `Hatchyu\Steward\Middleware\EnforceApiRequestFormat`: Rejects invalid payloads on state-changing requests (`POST`, `PUT`, `PATCH`) with `415 Unsupported Media Type` when strict JSON:API is required.
+- `Hatchyu\Steward\Middleware\EnforceApiResponseFormat`: Forces specific routes/groups to render in JSON:API or REST format regardless of client overrides.
+
 ## Design notes
 
 - The package favors Laravel-native primitives over third-party transport layers.
