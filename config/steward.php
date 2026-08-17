@@ -44,4 +44,22 @@ return [
     'max_fields' => 100,
     'max_sort_fields' => 20,
     'max_value_length' => 2048,
+
+    /*
+    |--------------------------------------------------------------------------
+    | API Response & Request Format Configuration
+    |--------------------------------------------------------------------------
+    |
+    | 'default_format'           - Default format when not specified ("rest" or "jsonapi").
+    | 'enforce_request_format'   - Incoming payload policy: "any" (hybrid), "jsonapi", or "rest".
+    | 'allow_format_override'    - Whether ?format= parameter / Accept header can override default.
+    | 'query_parameter'          - The query string parameter key for format overrides.
+    |
+    */
+    'api' => [
+        'default_format' => env('STEWARD_API_FORMAT', 'rest'),
+        'enforce_request_format' => env('STEWARD_ENFORCE_REQUEST_FORMAT', 'any'),
+        'allow_format_override' => (bool) env('STEWARD_ALLOW_FORMAT_OVERRIDE', true),
+        'query_parameter' => 'format',
+    ],
 ];

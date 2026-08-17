@@ -166,4 +166,57 @@ abstract class JsonApiResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
     {
         return static::jsonApiIncludeResources();
     }
+
+    #[Override]
+    public function toArray(Request $request): array
+    {
+        if (\Hatchyu\Steward\Http\ApiResponseFormatResolver::resolve($request) === \Hatchyu\Steward\Http\ApiResponseFormat::REST) {
+            return $this->toRestArray($request);
+        }
+
+        return parent::toArray($request);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function toRestArray(Request $request): array
+    {
+        $id = $this->toId($request);
+        $attributes = $this->jsonApiAttributes($request);
+
+        $rest = [];
+        if ($id !== null) {
+            $rest['id'] = is_numeric($id) ? (int) $id : $id;
+        }
+
+        $rest = array_merge($rest, $attributes);
+
+        foreach (static::jsonApiIncludeResources() as $relation => $resourceClass) {
+            if (is_string($relation) && $this->resource instanceof Model && $this->resource->relationLoaded($relation)) {
+                $related = $this->resource->getRelation($relation);
+                if ($related !== null) {
+                    if (is_string($resourceClass) && is_subclass_of($resourceClass, self::class)) {
+                        $rest[$relation] = $related instanceof \Illuminate\Support\Collection || is_array($related)
+                            ? $resourceClass::collection($related)
+                            : new $resourceClass($related);
+                    } else {
+                        $rest[$relation] = $related;
+                    }
+                }
+            }
+        }
+
+        return $rest;
+    }
+
+    #[Override]
+    public function withResponse(Request $request, \Illuminate\Http\JsonResponse $response): void
+    {
+        if (\Hatchyu\Steward\Http\ApiResponseFormatResolver::resolve($request) === \Hatchyu\Steward\Http\ApiResponseFormat::JSON_API) {
+            $response->header('Content-Type', 'application/vnd.api+json');
+        } else {
+            $response->header('Content-Type', 'application/json');
+        }
+    }
 }
