@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Hatchyu\Steward\Http;
 
+use Illuminate\Support\Str;
+
 final class JsonApiPayloadNormalizer
 {
     /**
@@ -40,18 +42,19 @@ final class JsonApiPayloadNormalizer
                 }
 
                 $relData = $relationData['data'];
+                $snakeName = Str::snake((string) $relationName);
 
                 if ($relData === null) {
-                    $normalized[$relationName . '_id'] = null;
-                    $normalized[$relationName] = null;
+                    $normalized[$snakeName . '_id'] = null;
+                    $normalized[$snakeName] = null;
                 } elseif (is_array($relData) && array_is_list($relData)) {
-                    $normalized[$relationName] = array_values(array_filter(array_map(
+                    $normalized[$snakeName] = array_values(array_filter(array_map(
                         static fn ($item): mixed => is_array($item) ? ($item['id'] ?? null) : null,
                         $relData
                     )));
                 } elseif (is_array($relData) && isset($relData['id'])) {
-                    $normalized[$relationName . '_id'] = $relData['id'];
-                    $normalized[$relationName] = $relData['id'];
+                    $normalized[$snakeName . '_id'] = $relData['id'];
+                    $normalized[$snakeName] = $relData['id'];
                 }
             }
         }

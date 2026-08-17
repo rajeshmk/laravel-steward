@@ -13,6 +13,10 @@ final class EnforceApiRequestFormat
 {
     public function handle(Request $request, Closure $next, string $requiredFormat = 'jsonapi'): Response
     {
+        if ($request->isMethodSafe()) {
+            return $next($request);
+        }
+
         $policy = strtolower($requiredFormat);
 
         if ($policy === 'jsonapi' || $policy === 'json_api') {
