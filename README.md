@@ -314,50 +314,61 @@ It normalizes booleans, backed/unit enums, and concrete `int`, `float`, and `str
 
 Use it for action payloads and request body transformation. The test suite includes examples of case conversion and nullable handling under `tests/Unit/`.
 
-## JSON:API resources
+## Steward Resources (`StewardResource`)
 
-Extend `Hatchyu\Steward\Resources\JsonApiResource` for response documents.
+Extend `Hatchyu\Steward\Resources\StewardResource` for API response documents.
 
-Example:
+`StewardResource` provides smart auto-detection defaults and format-neutral methods that serve both **Standard REST** and **JSON:API** formats:
+
+### Smart Conventions & Auto-Detection:
+
+- **`resourceType()` Auto-Detection**: Automatically derived from the class basename by removing `"Resource"` and converting to plural kebab-case (e.g., `CustomerAddressResource` ➔ `'customer-addresses'`, `CustomerResource` ➔ `'customers'`). Explicitly override only when custom naming is required.
+- **`allowedFields()`**: Declares field names permitted for sparse fieldset filtering (`?fields[customers]=name,email`).
+- **`fieldColumnMap()`**: Auto-mapped from `allowedFields()` (`field => [field]`) unless overridden for custom database column names.
+- **`allowedIncludes()`**: Declares relationship inclusion paths permitted for `?include=...` parameter query validation and automatic eager-load projection.
+- **`toAttributes(Request $request)`**: Declares scalar attribute properties. Loaded relationships defined in `allowedIncludes()` are **automatically rendered** by `StewardResource` for both REST and JSON:API modes without requiring manual relationship formatting in `toAttributes()`.
+
+### Example Resource Implementation:
 
 ```php
+use Hatchyu\Steward\Resources\StewardResource;
 use Illuminate\Http\Request;
-use Hatchyu\Steward\Resources\JsonApiResource;
+use Modules\Customer\Domain\Enums\CustomerGender;
+use Override;
 
-final class CustomerResource extends JsonApiResource
+final class CustomerResource extends StewardResource
 {
-    public static function jsonApiResourceType(): string
+    // resourceType() is AUTO-DERIVED as 'customers' automatically!
+
+    #[Override]
+    public static function allowedFields(): array
     {
-        return 'customers';
+        return ['name', 'email', 'phone', 'notes', 'is_active', 'gender', 'created_at', 'updated_at'];
     }
 
-    public static function jsonApiAllowedFields(): array
-    {
-        return ['name', 'email', 'phone'];
-    }
-
-    public static function jsonApiFieldColumnMap(): array
-    {
-        return [
-            'name' => ['name'],
-            'email' => ['email'],
-            'phone' => ['phone'],
-        ];
-    }
-
-    protected static function jsonApiIncludeResources(): array
+    #[Override]
+    protected static function allowedIncludes(): array
     {
         return [
             'addresses' => CustomerAddressResource::class,
         ];
     }
 
-    protected function jsonApiAttributes(Request $request): array
+    #[Override]
+    public function toAttributes(Request $request): array
     {
+        /** @var CustomerGender|string|null $gender */
+        $gender = $this->gender;
+
         return [
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
+            'notes' => $this->notes,
+            'is_active' => (bool) $this->is_active,
+            'gender' => $gender instanceof CustomerGender ? $gender->value : $gender,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }
@@ -375,14 +386,7 @@ Return a collection:
 return CustomerResource::collection($customers);
 ```
 
-Laravel will emit JSON:API documents with:
-
-- `data`
-- `relationships`
-- `included`
-- `links`
-- `meta`
-- `Content-Type: application/vnd.api+json`
+Both single resource and collection responses set the matching HTTP headers (`Content-Type: application/json` for REST mode, `Content-Type: application/vnd.api+json` for JSON:API mode).
 
 ## JSON:API request validation
 
