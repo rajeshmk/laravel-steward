@@ -36,8 +36,8 @@ final readonly class AutoQueryParamsParser implements QueryParamsParserContract
 
     private function isJsonApiRequest(Request $request): bool
     {
-        $accept = strtolower((string) $request->header('Accept', ''));
-        $contentType = strtolower((string) $request->header('Content-Type', ''));
+        $accept = strtolower(implode(',', $request->headers->all('accept')));
+        $contentType = strtolower(implode(',', $request->headers->all('content-type')));
 
         if (str_contains($accept, 'application/vnd.api+json') || str_contains($contentType, 'application/vnd.api+json')) {
             return true;

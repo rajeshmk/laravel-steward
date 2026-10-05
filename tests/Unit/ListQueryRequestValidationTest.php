@@ -255,5 +255,6 @@ test('it rejects scalar page number exceeding maxPageNumber in PageQueryRule', f
     $request->initialize(['page' => 1000000]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });

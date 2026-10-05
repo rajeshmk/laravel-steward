@@ -88,7 +88,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
         string $cursorName = 'cursor',
         int|string|Cursor|null $cursor = null,
     ): CursorPaginator {
-        return $this->query()->cursorPaginate($perPage, $columns, $cursorName, $cursor);
+        return $this->query()->cursorPaginate($perPage, $columns, $cursorName, is_int($cursor) ? (string) $cursor : $cursor);
     }
 
     protected function definition(): QueryDefinition

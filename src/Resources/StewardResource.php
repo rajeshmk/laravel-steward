@@ -198,7 +198,9 @@ abstract class StewardResource extends JsonApiResource
             return $this->toRestArray($request);
         }
 
-        return parent::toArray($request);
+        $result = parent::toArray($request);
+
+        return is_array($result) ? $result : (array) $result;
     }
 
     /**

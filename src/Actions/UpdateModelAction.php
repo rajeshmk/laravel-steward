@@ -32,6 +32,7 @@ abstract class UpdateModelAction extends AbstractModelAction
         return $this->transaction(function () use ($id, $data): Model {
             $this->ensureQueryModelMatchesAction($this->findModelQuery);
 
+            /** @var TModel $model */
             $model = $this->findModelQuery->byIdOrFail($id);
 
             return $this->executeUpdate($model, $data);

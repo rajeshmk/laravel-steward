@@ -20,7 +20,8 @@ final class EnforceApiRequestFormat
         $policy = strtolower($requiredFormat);
 
         if ($policy === 'jsonapi' || $policy === 'json_api') {
-            $hasHeader = str_contains(strtolower((string) $request->header('Content-Type', '')), 'application/vnd.api+json');
+            $contentType = strtolower(implode(',', $request->headers->all('content-type')));
+            $hasHeader = str_contains($contentType, 'application/vnd.api+json');
             $hasDataAttributes = $request->has('data.attributes') || $request->has('data.type');
 
             if (! $hasHeader && ! $hasDataAttributes) {

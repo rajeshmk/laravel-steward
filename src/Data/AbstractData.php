@@ -184,6 +184,9 @@ abstract class AbstractData
         return false;
     }
 
+    /**
+     * @return class-string<UnitEnum>|null
+     */
     private static function resolveEnumTypeName(ReflectionNamedType|ReflectionUnionType $type): ?string
     {
         if ($type instanceof ReflectionNamedType) {

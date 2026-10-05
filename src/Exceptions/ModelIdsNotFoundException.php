@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Exceptions;
 
 use Hatchyu\ApiExceptions\Model\ModelNotFoundException as ApiModelNotFoundException;
+use Illuminate\Database\Eloquent\Model;
 
 class ModelIdsNotFoundException extends ApiModelNotFoundException
 {
@@ -14,8 +15,8 @@ class ModelIdsNotFoundException extends ApiModelNotFoundException
     private array $ids;
 
     /**
-     * @param class-string     $modelClass
-     * @param list<int|string> $ids
+     * @param class-string<Model> $modelClass
+     * @param list<int|string>    $ids
      */
     public function __construct(string $modelClass, array $ids)
     {

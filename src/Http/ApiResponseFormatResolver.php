@@ -22,7 +22,8 @@ final class ApiResponseFormatResolver
         $allowOverride = (bool) config('steward.api.allow_format_override', true);
         if ($allowOverride) {
             $paramName = (string) config('steward.api.query_parameter', 'format');
-            $formatParam = strtolower((string) $request->query($paramName, ''));
+            $rawQuery = $request->query($paramName, '');
+            $formatParam = strtolower(is_string($rawQuery) ? $rawQuery : '');
 
             if (in_array($formatParam, ['jsonapi', 'json_api'], true)) {
                 return ApiResponseFormat::JSON_API;
@@ -32,7 +33,7 @@ final class ApiResponseFormatResolver
                 return ApiResponseFormat::REST;
             }
 
-            $acceptHeader = strtolower((string) $request->header('Accept', ''));
+            $acceptHeader = strtolower(implode(',', $request->headers->all('accept')));
             if (str_contains($acceptHeader, 'application/vnd.api+json')) {
                 return ApiResponseFormat::JSON_API;
             }
