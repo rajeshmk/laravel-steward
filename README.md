@@ -1,5 +1,14 @@
 # Laravel Steward
 
+<p align="center">
+    <a href="https://packagist.org/packages/hatchyu/laravel-steward"><img src="https://img.shields.io/packagist/v/hatchyu/laravel-steward.svg?style=flat-square" alt="Latest Version on Packagist"></a>
+    <a href="https://github.com/rajeshmk/laravel-steward/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/rajeshmk/laravel-steward/tests.yml?branch=main&label=tests&style=flat-square" alt="GitHub Tests Action Status"></a>
+    <a href="https://packagist.org/packages/hatchyu/laravel-steward"><img src="https://img.shields.io/packagist/dt/hatchyu/laravel-steward.svg?style=flat-square" alt="Total Downloads"></a>
+    <a href="https://packagist.org/packages/hatchyu/laravel-steward"><img src="https://img.shields.io/packagist/l/hatchyu/laravel-steward.svg?style=flat-square" alt="License"></a>
+    <a href="https://php.net"><img src="https://img.shields.io/badge/php-%5E8.4-777bb4.svg?style=flat-square" alt="PHP 8.4+"></a>
+    <a href="https://laravel.com"><img src="https://img.shields.io/badge/laravel-%5E12.0-ff2d20.svg?style=flat-square" alt="Laravel 12+"></a>
+</p>
+
 Production-grade CQRS primitives, declarative HTTP query parsing, and native JSON:API stewardship for Laravel applications.
 
 ## Overview
@@ -21,6 +30,11 @@ Production-grade CQRS primitives, declarative HTTP query parsing, and native JSO
 > - **Authorization**: Always perform Policy checks (`$this->authorize(...)` / `Gate::authorize()`) in your Controllers or Form Requests before passing models to Steward Actions.
 > - **Tenant Scoping**: Ensure tenant-scoped global scopes or explicit query scoping (e.g., `$user->team->customers()`) are applied prior to executing Steward Queries or Actions.
 > Steward assumes the model or query passed into its pipeline has already been authorized and scoped by your application.
+
+## Requirements
+
+- **PHP**: `^8.4`
+- **Laravel**: `^12.0` (Steward builds upon Laravel 12's native `JsonApiResource` system)
 
 ## Installation
 
@@ -125,7 +139,7 @@ It includes:
 - `page`
 - `size`
 
-For safety, list endpoints reject `include` and sparse `fields[...]` parameters unless the query or request declares them explicitly. When using `JsonApiResource`, its resource metadata supplies those allowlists automatically. Non-JSON:API queries can override `GetModelQuery::allowedIncludes()`.
+For safety, list endpoints reject `include` and sparse `fields[...]` parameters unless the query or request declares them explicitly. When using `StewardResource`, its resource metadata supplies those allowlists automatically. Non-JSON:API queries can override `GetModelQuery::allowedIncludes()`.
 
 ## Query definitions
 
@@ -382,7 +396,7 @@ use Override;
 final class ListCustomersRequest extends ListQueryRequest
 {
     #[Override]
-    protected function primaryJsonApiResource(): ?string
+    protected function primaryStewardResource(): ?string
     {
         return CustomerResource::class;
     }
@@ -426,9 +440,9 @@ Incoming write payloads (`POST`, `PUT`, `PATCH`) are processed in `BaseActionReq
 
 This allows Form Requests (`BaseActionRequest`), `AbstractData` DTOs, and CQRS Actions to remain **100% format-agnostic**.
 
-### 3. Dual Response Formatting (`JsonApiResource` & `AnonymousResourceCollection`)
+### 3. Dual Response Formatting (`StewardResource` & `AnonymousResourceCollection`)
 
-Extending `JsonApiResource` automatically renders:
+Extending `StewardResource` automatically renders:
 
 - **REST Mode** (Default): `{ "id": 1, "name": "Acme Corp" }` with `Content-Type: application/json`.
 - **JSON:API Mode**: Full JSON:API document (`data`, `relationships`, `included`, `meta`) with `Content-Type: application/vnd.api+json`.
