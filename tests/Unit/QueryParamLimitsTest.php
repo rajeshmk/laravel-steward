@@ -11,5 +11,6 @@ test('it rejects unsafe query parameter limits', function (): void {
     expect(fn (): QueryParamLimits => new QueryParamLimits(defaultPageSize: 101, maxPageSize: 100))
         ->toThrow(InvalidArgumentException::class)
         ->and(fn (): QueryParamLimits => new QueryParamLimits(maxPageSize: 0))
-        ->toThrow(InvalidArgumentException::class);
+        ->toThrow(InvalidArgumentException::class)
+    ;
 });

@@ -11,6 +11,7 @@ use Throwable;
 
 /**
  * @template TModel of Model
+ *
  * @extends AbstractModelAction<TModel, \Hatchyu\Steward\Data\AbstractData>
  */
 abstract class DeleteModelAction extends AbstractModelAction
@@ -26,22 +27,6 @@ abstract class DeleteModelAction extends AbstractModelAction
         $model = $this->findModelQuery->byIdOrFail($id);
 
         $this->executeModel($model);
-    }
-
-    /**
-     * @param TModel $model
-     */
-    protected function beforeDelete(Model $model): void
-    {
-        // Hook for subclasses.
-    }
-
-    /**
-     * @param TModel $model
-     */
-    protected function afterDelete(Model $model): void
-    {
-        // Hook for subclasses.
     }
 
     /**
@@ -70,5 +55,21 @@ abstract class DeleteModelAction extends AbstractModelAction
         });
 
         $this->afterDelete($model);
+    }
+
+    /**
+     * @param TModel $model
+     */
+    protected function beforeDelete(Model $model): void
+    {
+        // Hook for subclasses.
+    }
+
+    /**
+     * @param TModel $model
+     */
+    protected function afterDelete(Model $model): void
+    {
+        // Hook for subclasses.
     }
 }

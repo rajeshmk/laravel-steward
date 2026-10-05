@@ -29,12 +29,14 @@ interface GetModelQueryContract
 
     /**
      * @param array<int, string> $columns
+     *
      * @return Collection<int, Model>
      */
     public function get(array $columns = ['*']): Collection;
 
     /**
      * @param array<int, string> $columns
+     *
      * @return LengthAwarePaginator<int, Model>
      */
     public function paginate(
@@ -46,6 +48,7 @@ interface GetModelQueryContract
 
     /**
      * @param array<int, string> $columns
+     *
      * @return CursorPaginator<int, Model>
      */
     public function cursorPaginate(

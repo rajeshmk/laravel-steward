@@ -12,6 +12,7 @@ final class EndsWithSearch extends AbstractStringSearch
 {
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     #[Override]

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Hatchyu\Steward\Requests;
 
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Requests\Rules\FieldsQueryRule;
 use Hatchyu\Steward\Requests\Rules\FilterQueryRule;
 use Hatchyu\Steward\Requests\Rules\IncludeQueryRule;
 use Hatchyu\Steward\Requests\Rules\PageQueryRule;
 use Hatchyu\Steward\Requests\Rules\SortQueryRule;
-use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Resources\Concerns\ResolvesJsonApiResourceMetadata;
 use Hatchyu\Steward\Resources\StewardResource;
 use Override;

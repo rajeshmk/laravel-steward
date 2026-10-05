@@ -12,6 +12,7 @@ final class JsonApiPayloadNormalizer
      * Normalize request input data supporting both flat REST bodies and JSON:API payloads.
      *
      * @param array<string, mixed> $data
+     *
      * @return array<string, mixed>
      */
     public static function normalize(array $data): array

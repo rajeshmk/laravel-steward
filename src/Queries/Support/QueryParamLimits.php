@@ -9,18 +9,6 @@ use InvalidArgumentException;
 
 final readonly class QueryParamLimits
 {
-    /**
-     * @param int $defaultPageSize
-     * @param int $maxPageSize
-     * @param int $maxPageNumber
-     * @param int $maxFilterFields
-     * @param int $maxFilterValues
-     * @param int $maxIncludes
-     * @param int $maxFieldsets
-     * @param int $maxFields
-     * @param int $maxSortFields
-     * @param int $maxValueLength
-     */
     public function __construct(
         public int $defaultPageSize = 15,
         public int $maxPageSize = 100,

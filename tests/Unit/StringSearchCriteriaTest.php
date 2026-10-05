@@ -2,13 +2,11 @@
 
 declare(strict_types=1);
 
-use Hatchyu\Steward\Tests\Fixtures\Customer;
 use Hatchyu\Steward\Queries\Criteria\Searches\EndsWithSearch;
 use Hatchyu\Steward\Queries\Criteria\Searches\PartialSearch;
 use Hatchyu\Steward\Queries\Criteria\Searches\SimpleSearch;
 use Hatchyu\Steward\Queries\Criteria\Searches\StartsWithSearch;
-use Hatchyu\Steward\Tests\TestCase;
-
+use Hatchyu\Steward\Tests\Fixtures\Customer;
 
 test('partial search escapes like wildcard characters', function (): void {
     $query = Customer::query();

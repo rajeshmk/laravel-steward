@@ -65,6 +65,7 @@ final class DefaultQueryParamsParser extends AbstractQueryParamsParser
             if (! is_string($params['cursor']) || trim($params['cursor']) === '') {
                 throw ValidationException::withMessages(['cursor' => 'The cursor must be a non-empty string.']);
             }
+
             return trim($params['cursor']);
         }
 

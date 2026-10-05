@@ -78,6 +78,7 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
 
     /**
      * @param array<string, mixed> $params
+     *
      * @return array<string, mixed>
      */
     protected function extractFilters(array $params): array
@@ -116,6 +117,7 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
 
     /**
      * @param array<string, mixed> $params
+     *
      * @return list<SortField>
      */
     protected function extractSort(array $params): array
@@ -140,6 +142,7 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
         foreach ($sort as $key => $value) {
             if (is_int($key) && is_string($value)) {
                 $sortFields[] = $this->parseSortToken($value);
+
                 continue;
             }
 
@@ -149,6 +152,7 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
                     throw ValidationException::withMessages(['sort' => 'Invalid sort parameter format.']);
                 }
                 $sortFields[] = new SortField(trim($key), $direction);
+
                 continue;
             }
 
@@ -162,6 +166,7 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
 
     /**
      * @param array<string, mixed> $params
+     *
      * @return list<string>
      */
     protected function extractIncludes(array $params): array
@@ -171,6 +176,7 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
             if (array_key_exists('include', $params) && $params['include'] !== null) {
                 throw ValidationException::withMessages(['include' => 'The include parameter must be a comma-separated string or array.']);
             }
+
             return [];
         }
         if (count($includes) > $this->limits->maxIncludes) {
@@ -181,11 +187,13 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
                 throw ValidationException::withMessages(['include' => sprintf('Invalid include path: %s.', $include)]);
             }
         }
+
         return $includes;
     }
 
     /**
      * @param array<string, mixed> $params
+     *
      * @return array<string, list<string>>
      */
     protected function extractFields(array $params): array
@@ -238,6 +246,7 @@ abstract class AbstractQueryParamsParser implements QueryParamsParserContract
         if (! is_string($page['cursor']) || trim($page['cursor']) === '') {
             throw ValidationException::withMessages(['page.cursor' => 'The page cursor must be a non-empty string.']);
         }
+
         return trim($page['cursor']);
     }
 

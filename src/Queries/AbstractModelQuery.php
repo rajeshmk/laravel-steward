@@ -42,6 +42,7 @@ abstract class AbstractModelQuery extends AbstractQuery
 
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     protected function apply(Builder $query): Builder

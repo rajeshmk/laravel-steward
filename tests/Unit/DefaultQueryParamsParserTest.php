@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
 use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Illuminate\Validation\ValidationException;
-use Hatchyu\Steward\Tests\TestCase;
 
 test('it parses flat filter query params', function (): void {
     $parser = new DefaultQueryParamsParser();
@@ -147,12 +146,14 @@ test('it enforces configured query complexity limits', function (): void {
         ->toThrow(ValidationException::class)
         ->and(fn (): mixed => $parser->parse(['sort' => 'name,email']))
         ->toThrow(ValidationException::class)
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it rejects overly long query values before parsing them', function (): void {
     $parser = new DefaultQueryParamsParser(new QueryParamLimits(maxValueLength: 5));
 
     expect(fn (): mixed => $parser->parse(['search' => 'longer']))
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });

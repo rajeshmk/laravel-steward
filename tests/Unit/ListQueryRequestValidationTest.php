@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Tests\Unit;
 
 use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
-use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Queries\Parsers\JsonApiQueryParamsParser;
+use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Requests\ListQueryRequest;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Hatchyu\Steward\Tests\TestCase;
 
 test('it allows jsonapi include and fields parameters derived from the resource', function (): void {
     $request = new class() extends ListQueryRequest
@@ -45,7 +45,8 @@ test('it rejects unsupported include paths', function (): void {
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it rejects unsupported sparse fieldsets', function (): void {
@@ -64,7 +65,8 @@ test('it rejects unsupported sparse fieldsets', function (): void {
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it allows filter as json object string', function (): void {
@@ -97,7 +99,8 @@ test('it rejects invalid json in filter string', function (): void {
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it validates and parses JSON sort array via ListQueryRequest toQueryParams', function (): void {
@@ -135,7 +138,8 @@ test('it rejects filter JSON array when object is required', function (): void {
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it rejects include payload containing invalid element types', function (): void {
@@ -152,7 +156,8 @@ test('it rejects include payload containing invalid element types', function ():
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it rejects object provided as a list for include', function (): void {
@@ -169,7 +174,8 @@ test('it rejects object provided as a list for include', function (): void {
     ]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it rejects excessive page sizes', function (): void {
@@ -195,12 +201,13 @@ test('it rejects non-positive page integers in PageQueryRule', function (): void
     $request->initialize(['page' => 0]);
 
     expect(fn (): array => $request->validateQuery())
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it parses JSON string query params in JsonApiQueryParamsParser with parity', function (): void {
     $parser = new JsonApiQueryParamsParser();
-    $request = new \Illuminate\Http\Request();
+    $request = new Request();
     $request->query->replace([
         'sort' => '["-created_at","name"]',
         'include' => '["addresses"]',

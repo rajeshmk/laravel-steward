@@ -8,6 +8,7 @@ use Hatchyu\Steward\Actions\AbstractAction;
 use Hatchyu\Steward\Actions\DeleteModelAction;
 use Hatchyu\Steward\Actions\UpdateModelAction;
 use Hatchyu\Steward\Data\AbstractData;
+use Hatchyu\Steward\Exceptions\DeleteModelException;
 use Hatchyu\Steward\Exceptions\UpdateModelException;
 use Hatchyu\Steward\Queries\Contracts\FindModelQueryContract;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,15 +22,50 @@ function fakeFindModelQuery(Model $model): FindModelQueryContract
     {
         public function __construct(private Model $model) {}
 
-        public function modelClass(): string { return $this->model::class; }
-        public function byId(int|string $id, array|string $columns = ['*']): ?Model { return $this->model; }
-        public function byIdOrFail(int|string $id, array|string $columns = ['*']): Model { return $this->model; }
-        public function byIds(array $ids, array|string $columns = ['*']): Collection { return new Collection([$this->model]); }
-        public function byIdsOrFail(array $ids, array|string $columns = ['*']): Collection { return new Collection([$this->model]); }
-        public function find(int|string $id, array|string $columns = ['*']): ?Model { return $this->model; }
-        public function findOrFail(int|string $id, array|string $columns = ['*']): Model { return $this->model; }
-        public function findMany(array $ids, array|string $columns = ['*']): Collection { return new Collection([$this->model]); }
-        public function findManyOrFail(array $ids, array|string $columns = ['*']): Collection { return new Collection([$this->model]); }
+        public function modelClass(): string
+        {
+            return $this->model::class;
+        }
+
+        public function byId(int|string $id, array|string $columns = ['*']): ?Model
+        {
+            return $this->model;
+        }
+
+        public function byIdOrFail(int|string $id, array|string $columns = ['*']): Model
+        {
+            return $this->model;
+        }
+
+        public function byIds(array $ids, array|string $columns = ['*']): Collection
+        {
+            return new Collection([$this->model]);
+        }
+
+        public function byIdsOrFail(array $ids, array|string $columns = ['*']): Collection
+        {
+            return new Collection([$this->model]);
+        }
+
+        public function find(int|string $id, array|string $columns = ['*']): ?Model
+        {
+            return $this->model;
+        }
+
+        public function findOrFail(int|string $id, array|string $columns = ['*']): Model
+        {
+            return $this->model;
+        }
+
+        public function findMany(array $ids, array|string $columns = ['*']): Collection
+        {
+            return new Collection([$this->model]);
+        }
+
+        public function findManyOrFail(array $ids, array|string $columns = ['*']): Collection
+        {
+            return new Collection([$this->model]);
+        }
     };
 }
 
@@ -410,7 +446,8 @@ test('UpdateModelAction rejects a different model class even when it uses the sa
     };
 
     expect(fn (): Model => $action->executeModel($foreign, $data))
-        ->toThrow(UpdateModelException::class);
+        ->toThrow(UpdateModelException::class)
+    ;
 });
 
 test('DeleteModelAction rejects a model that does not match its configured model class', function (): void {
@@ -436,7 +473,8 @@ test('DeleteModelAction rejects a model that does not match its configured model
     };
 
     expect(fn (): mixed => $action->executeModel($foreign))
-        ->toThrow(\Hatchyu\Steward\Exceptions\DeleteModelException::class);
+        ->toThrow(DeleteModelException::class)
+    ;
 });
 
 test('UpdateModelAction retains persistence errors as previous exceptions without exposing their message', function (): void {
@@ -472,7 +510,8 @@ test('UpdateModelAction retains persistence errors as previous exceptions withou
         $action->executeModel($model, $data);
     } catch (UpdateModelException $exception) {
         expect($exception->getMessage())->toBe('Failed to update model')
-            ->and($exception->getPrevious())->toBeInstanceOf(RuntimeException::class);
+            ->and($exception->getPrevious())->toBeInstanceOf(RuntimeException::class)
+        ;
 
         return;
     }
@@ -488,7 +527,8 @@ test('AbstractAction delegates unconditionally to DB::transaction callback', fun
         return $callback();
     });
 
-    $action = new class() extends AbstractAction {
+    $action = new class() extends AbstractAction
+    {
         public function run(): bool
         {
             return $this->transaction(static fn (): bool => true);
@@ -507,7 +547,8 @@ test('AbstractAction delegates to DB::afterCommit for post-transaction callbacks
         $callback();
     });
 
-    $action = new class() extends AbstractAction {
+    $action = new class() extends AbstractAction
+    {
         public function runAfterCommit(callable $cb): void
         {
             $this->afterCommit($cb);

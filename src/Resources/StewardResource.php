@@ -9,10 +9,12 @@ use Hatchyu\Steward\Http\ApiResponseFormatResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\JsonApi\JsonApiResource;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Override;
 
-abstract class StewardResource extends \Illuminate\Http\Resources\JsonApi\JsonApiResource
+abstract class StewardResource extends JsonApiResource
 {
     /**
      * The resource type string (defaults to kebab-case plural of class basename without 'Resource').
@@ -49,16 +51,6 @@ abstract class StewardResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
         }
 
         return $map;
-    }
-
-    /**
-     * Allowed relationship inclusion paths.
-     *
-     * @return array<string, class-string<self>>
-     */
-    protected static function allowedIncludes(): array
-    {
-        return [];
     }
 
     /**
@@ -105,14 +97,6 @@ abstract class StewardResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
     public static function jsonApiFieldColumnMap(): array
     {
         return static::fieldColumnMap();
-    }
-
-    /**
-     * @return array<int|string, mixed>
-     */
-    protected static function jsonApiIncludeResources(): array
-    {
-        return static::allowedIncludes();
     }
 
     public function toId(Request $request): ?string
@@ -204,6 +188,9 @@ abstract class StewardResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
         return $resource;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     #[Override]
     public function toArray(Request $request): array
     {
@@ -212,6 +199,47 @@ abstract class StewardResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
         }
 
         return parent::toArray($request);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[Override]
+    public function with($request)
+    {
+        if (ApiResponseFormatResolver::resolve($request) === ApiResponseFormat::REST) {
+            return [];
+        }
+
+        return parent::with($request);
+    }
+
+    #[Override]
+    public function withResponse(Request $request, JsonResponse $response): void
+    {
+        if (ApiResponseFormatResolver::resolve($request) === ApiResponseFormat::JSON_API) {
+            $response->header('Content-Type', 'application/vnd.api+json');
+        } else {
+            $response->header('Content-Type', 'application/json');
+        }
+    }
+
+    /**
+     * Allowed relationship inclusion paths.
+     *
+     * @return array<string, class-string<self>>
+     */
+    protected static function allowedIncludes(): array
+    {
+        return [];
+    }
+
+    /**
+     * @return array<int|string, mixed>
+     */
+    protected static function jsonApiIncludeResources(): array
+    {
+        return static::allowedIncludes();
     }
 
     /**
@@ -234,7 +262,7 @@ abstract class StewardResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
                 $related = $this->resource->getRelation($relation);
                 if ($related !== null) {
                     if (is_string($resourceClass) && is_subclass_of($resourceClass, self::class)) {
-                        $rest[$relation] = $related instanceof \Illuminate\Support\Collection || is_array($related)
+                        $rest[$relation] = $related instanceof Collection || is_array($related)
                             ? $resourceClass::collection($related)
                             : new $resourceClass($related);
                     } else {
@@ -248,28 +276,8 @@ abstract class StewardResource extends \Illuminate\Http\Resources\JsonApi\JsonAp
     }
 
     #[Override]
-    public function with($request)
-    {
-        if (ApiResponseFormatResolver::resolve($request) === ApiResponseFormat::REST) {
-            return [];
-        }
-
-        return parent::with($request);
-    }
-
-    #[Override]
     protected static function newCollection($resource)
     {
         return new AnonymousResourceCollection($resource, static::class);
-    }
-
-    #[Override]
-    public function withResponse(Request $request, JsonResponse $response): void
-    {
-        if (ApiResponseFormatResolver::resolve($request) === ApiResponseFormat::JSON_API) {
-            $response->header('Content-Type', 'application/vnd.api+json');
-        } else {
-            $response->header('Content-Type', 'application/json');
-        }
     }
 }

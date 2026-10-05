@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Hatchyu\Steward\Data\AbstractData;
 use Hatchyu\Steward\Tests\Unit\AbstractDataCaseConversionTestData;
 use Hatchyu\Steward\Tests\Unit\AbstractNullableBoolData;
 use Hatchyu\Steward\Tests\Unit\AbstractNullableEnumData;
@@ -72,7 +73,7 @@ test('it throws when null is passed to non-nullable bool property', function ():
 });
 
 test('it safely normalizes scalar request values for concrete scalar DTO properties', function (): void {
-    $dataClass = (new class(0, 0.0, '') extends \Hatchyu\Steward\Data\AbstractData
+    $dataClass = (new class(0, 0.0, '') extends AbstractData
     {
         public function __construct(
             public int $count,
@@ -89,11 +90,12 @@ test('it safely normalizes scalar request values for concrete scalar DTO propert
 
     expect($result->count)->toBe(12)
         ->and($result->amount)->toBe(19.95)
-        ->and($result->reference)->toBe('42');
+        ->and($result->reference)->toBe('42')
+    ;
 });
 
 test('it preserves PHP union behavior rather than coercing bool|string values to bool', function (): void {
-    $dataClass = (new class('') extends \Hatchyu\Steward\Data\AbstractData
+    $dataClass = (new class('') extends AbstractData
     {
         public function __construct(public bool|string $value) {}
     })::class;

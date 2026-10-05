@@ -27,8 +27,9 @@ final class DefaultQueryParamsProcessor implements QueryParamsProcessorContract
     }
 
     /**
-     * @param Builder<Model> $query
+     * @param Builder<Model>     $query
      * @param array<int, string> $columns
+     *
      * @return LengthAwarePaginator<int, Model>
      */
     public function paginate(
@@ -46,8 +47,9 @@ final class DefaultQueryParamsProcessor implements QueryParamsProcessorContract
     }
 
     /**
-     * @param Builder<Model> $query
+     * @param Builder<Model>     $query
      * @param array<int, string> $columns
+     *
      * @return CursorPaginator<int, Model>
      */
     public function cursorPaginate(

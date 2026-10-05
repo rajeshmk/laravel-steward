@@ -12,6 +12,7 @@ final class PartialSearch extends AbstractStringSearch
 {
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     #[Override]

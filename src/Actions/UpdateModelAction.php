@@ -13,6 +13,7 @@ use Throwable;
 /**
  * @template TModel of Model
  * @template TData of AbstractData
+ *
  * @extends AbstractModelAction<TModel, TData>
  */
 abstract class UpdateModelAction extends AbstractModelAction
@@ -22,8 +23,8 @@ abstract class UpdateModelAction extends AbstractModelAction
     ) {}
 
     /**
-     * @param int|string $id
      * @param TData $data
+     *
      * @return TModel
      */
     final public function execute(int|string $id, AbstractData $data): Model
@@ -39,7 +40,8 @@ abstract class UpdateModelAction extends AbstractModelAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
+     *
      * @return TModel
      */
     final public function executeModel(Model $model, AbstractData $data): Model
@@ -53,7 +55,7 @@ abstract class UpdateModelAction extends AbstractModelAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
      */
     protected function beforePersist(Model $model, AbstractData $data): void
     {
@@ -62,7 +64,7 @@ abstract class UpdateModelAction extends AbstractModelAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
      */
     protected function afterPersist(Model $model, AbstractData $data): void
     {
@@ -71,7 +73,8 @@ abstract class UpdateModelAction extends AbstractModelAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
+     *
      * @return TModel
      */
     protected function afterExecute(Model $model, AbstractData $data): Model
@@ -81,7 +84,8 @@ abstract class UpdateModelAction extends AbstractModelAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
+     *
      * @return TModel
      */
     private function executeUpdate(Model $model, AbstractData $data): Model

@@ -7,8 +7,6 @@ use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
 use Hatchyu\Steward\Queries\Parsers\JsonApiQueryParamsParser;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Hatchyu\Steward\Tests\TestCase;
-
 
 test('it auto-detects jsonapi from accept header', function (): void {
     $parser = new AutoQueryParamsParser(

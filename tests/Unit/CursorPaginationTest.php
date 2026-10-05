@@ -7,8 +7,6 @@ namespace Hatchyu\Steward\Tests\Unit;
 use Hatchyu\Steward\Queries\Parsers\DefaultQueryParamsParser;
 use Hatchyu\Steward\Queries\Parsers\JsonApiQueryParamsParser;
 use Illuminate\Http\Request;
-use Hatchyu\Steward\Tests\TestCase;
-
 
 test('DefaultQueryParamsParser extracts cursor parameter', function (): void {
     $parser = new DefaultQueryParamsParser();

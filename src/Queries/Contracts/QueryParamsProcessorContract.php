@@ -15,13 +15,15 @@ interface QueryParamsProcessorContract
 {
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     public function apply(Builder $query, QueryParams $params, QueryDefinition $definition): Builder;
 
     /**
-     * @param Builder<Model> $query
+     * @param Builder<Model>     $query
      * @param array<int, string> $columns
+     *
      * @return LengthAwarePaginator<int, Model>
      */
     public function paginate(
@@ -32,8 +34,9 @@ interface QueryParamsProcessorContract
     ): LengthAwarePaginator;
 
     /**
-     * @param Builder<Model> $query
+     * @param Builder<Model>     $query
      * @param array<int, string> $columns
+     *
      * @return CursorPaginator<int, Model>
      */
     public function cursorPaginate(

@@ -31,6 +31,7 @@ final class StewardServiceProvider extends ServiceProvider
             QueryParamsParserContract::class,
             function (): QueryParamsParserContract {
                 $limits = resolve(QueryParamLimits::class);
+
                 return new AutoQueryParamsParser(
                     defaultParser: new DefaultQueryParamsParser($limits),
                     jsonApiParser: new JsonApiQueryParamsParser($limits),

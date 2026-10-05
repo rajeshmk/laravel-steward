@@ -9,8 +9,6 @@ use Hatchyu\Steward\Queries\FindModelQuery;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
-use Hatchyu\Steward\Tests\TestCase;
-
 
 test('byIdsOrFail throws ModelIdsNotFoundException when any requested ID is missing', function (): void {
     $dummyModel = new class() extends Model

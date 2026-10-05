@@ -26,6 +26,25 @@ trait NormalizesQueryParams
         return $value;
     }
 
+    protected function normalizeBoundedPositiveInt(mixed $value, int $default, int $max, string $attribute): int
+    {
+        if ($value === null) {
+            return $default;
+        }
+
+        $normalized = is_int($value)
+            ? $value
+            : (is_string($value) && ctype_digit(trim($value)) ? (int) trim($value) : null);
+
+        if ($normalized === null || $normalized < 1 || $normalized > $max) {
+            throw ValidationException::withMessages([
+                $attribute => sprintf('The %s value must be a positive integer not greater than %d.', $attribute, $max),
+            ]);
+        }
+
+        return $normalized;
+    }
+
     /**
      * Normalize a string, comma-separated string, or array into a list of trimmed non-empty strings.
      *
@@ -73,25 +92,6 @@ trait NormalizesQueryParams
             field: trim($field),
             direction: $isDesc ? 'desc' : 'asc'
         );
-    }
-
-    protected function normalizeBoundedPositiveInt(mixed $value, int $default, int $max, string $attribute): int
-    {
-        if ($value === null) {
-            return $default;
-        }
-
-        $normalized = is_int($value)
-            ? $value
-            : (is_string($value) && ctype_digit(trim($value)) ? (int) trim($value) : null);
-
-        if ($normalized === null || $normalized < 1 || $normalized > $max) {
-            throw ValidationException::withMessages([
-                $attribute => sprintf('The %s value must be a positive integer not greater than %d.', $attribute, $max),
-            ]);
-        }
-
-        return $normalized;
     }
 
     /**

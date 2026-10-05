@@ -82,7 +82,7 @@ abstract class AbstractModelAction extends AbstractAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
      */
     protected function fillModel(Model $model, AbstractData $data): void
     {

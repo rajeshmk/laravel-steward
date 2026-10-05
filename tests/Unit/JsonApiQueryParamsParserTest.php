@@ -5,8 +5,6 @@ declare(strict_types=1);
 use Hatchyu\Steward\Queries\Parsers\JsonApiQueryParamsParser;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Hatchyu\Steward\Tests\TestCase;
-
 
 test('it parses jsonapi pagination and sort', function (): void {
     $parser = new JsonApiQueryParamsParser();
@@ -124,7 +122,8 @@ test('it rejects scalar page values in jsonapi mode', function (): void {
     $parser = new JsonApiQueryParamsParser();
 
     expect(fn (): mixed => $parser->parse(['page' => '2']))
-        ->toThrow(ValidationException::class);
+        ->toThrow(ValidationException::class)
+    ;
 });
 
 test('it rejects jsonapi pagination hybrids', function (): void {

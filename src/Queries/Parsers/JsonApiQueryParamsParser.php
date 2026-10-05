@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hatchyu\Steward\Queries\Parsers;
 
 use Hatchyu\Steward\Queries\Params\QueryParams;
+use Hatchyu\Steward\Queries\Params\SortField;
 use Hatchyu\Steward\Queries\Support\QueryParamLimits;
 use Hatchyu\Steward\Queries\Support\QuerySyntax;
 use Illuminate\Http\Request;
@@ -57,6 +58,34 @@ final class JsonApiQueryParamsParser extends AbstractQueryParamsParser
     }
 
     /**
+     * @param array<string, mixed> $params
+     *
+     * @return list<SortField>
+     */
+    protected function extractSort(array $params): array
+    {
+        if (array_key_exists('sort', $params) && ! is_string($params['sort']) && $params['sort'] !== null) {
+            throw ValidationException::withMessages(['sort' => 'The sort parameter must be a string.']);
+        }
+
+        return parent::extractSort($params);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     *
+     * @return list<string>
+     */
+    protected function extractIncludes(array $params): array
+    {
+        if (array_key_exists('include', $params) && ! is_string($params['include']) && $params['include'] !== null) {
+            throw ValidationException::withMessages(['include' => 'The include parameter must be a string.']);
+        }
+
+        return parent::extractIncludes($params);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function extractInputPayload(Request $request): array
@@ -76,32 +105,6 @@ final class JsonApiQueryParamsParser extends AbstractQueryParamsParser
         }
 
         return $query;
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     * @return list<\Hatchyu\Steward\Queries\Params\SortField>
-     */
-    protected function extractSort(array $params): array
-    {
-        if (array_key_exists('sort', $params) && ! is_string($params['sort']) && $params['sort'] !== null) {
-            throw ValidationException::withMessages(['sort' => 'The sort parameter must be a string.']);
-        }
-
-        return parent::extractSort($params);
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     * @return list<string>
-     */
-    protected function extractIncludes(array $params): array
-    {
-        if (array_key_exists('include', $params) && ! is_string($params['include']) && $params['include'] !== null) {
-            throw ValidationException::withMessages(['include' => 'The include parameter must be a string.']);
-        }
-
-        return parent::extractIncludes($params);
     }
 
     /**

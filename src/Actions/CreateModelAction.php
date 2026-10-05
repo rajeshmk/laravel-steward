@@ -12,12 +12,14 @@ use Throwable;
 /**
  * @template TModel of Model
  * @template TData of AbstractData
+ *
  * @extends AbstractModelAction<TModel, TData>
  */
 abstract class CreateModelAction extends AbstractModelAction
 {
     /**
      * @param TData $data
+     *
      * @return TModel
      */
     final public function execute(AbstractData $data): Model
@@ -49,7 +51,7 @@ abstract class CreateModelAction extends AbstractModelAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
      */
     protected function beforePersist(Model $model, AbstractData $data): void
     {
@@ -58,7 +60,7 @@ abstract class CreateModelAction extends AbstractModelAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
      */
     protected function afterPersist(Model $model, AbstractData $data): void
     {
@@ -67,7 +69,8 @@ abstract class CreateModelAction extends AbstractModelAction
 
     /**
      * @param TModel $model
-     * @param TData $data
+     * @param TData  $data
+     *
      * @return TModel
      */
     protected function afterExecute(Model $model, AbstractData $data): Model

@@ -13,6 +13,7 @@ abstract class AbstractStringSearch extends AbstractSearch
 
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     public function apply(Builder $query, mixed $value): Builder
@@ -49,6 +50,7 @@ abstract class AbstractStringSearch extends AbstractSearch
 
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     protected function applyStringSearch(Builder $query, string $value): Builder

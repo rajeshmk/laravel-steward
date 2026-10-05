@@ -29,6 +29,7 @@ use Illuminate\Validation\ValidationException;
 class GetModelQuery extends ModelQuery implements GetModelQueryContract
 {
     use ResolvesJsonApiResourceMetadata;
+
     public function __construct(
         Model $model,
         protected readonly QueryParamsProcessorContract $queryParamsProcessor,
@@ -54,6 +55,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param array<int, string> $columns
+     *
      * @return Collection<int, Model>
      */
     public function get(array $columns = ['*']): Collection
@@ -63,6 +65,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param array<int, string> $columns
+     *
      * @return LengthAwarePaginator<int, Model>
      */
     public function paginate(
@@ -76,6 +79,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param array<int, string> $columns
+     *
      * @return CursorPaginator<int, Model>
      */
     public function cursorPaginate(
@@ -94,6 +98,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     protected function applyQueryParams(Builder $query, QueryParams $params): Builder
@@ -126,8 +131,9 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     }
 
     /**
-     * @param Builder<Model> $query
+     * @param Builder<Model>     $query
      * @param array<int, string> $columns
+     *
      * @return LengthAwarePaginator<int, Model>
      */
     protected function paginateByQueryParams(
@@ -140,8 +146,9 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     }
 
     /**
-     * @param Builder<Model> $query
+     * @param Builder<Model>     $query
      * @param array<int, string> $columns
+     *
      * @return CursorPaginator<int, Model>
      */
     protected function cursorPaginateByQueryParams(
@@ -156,7 +163,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     }
 
     /**
-     * @return class-string<JsonApiResource>|null
+     * @return class-string<StewardResource>|null
      */
     protected function jsonApiResource(): ?string
     {
@@ -262,6 +269,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     private function applyIncludes(Builder $query, QueryParams $params): Builder
@@ -342,6 +350,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     private function applyFieldProjection(Builder $query, QueryParams $params): Builder
@@ -436,10 +445,10 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
     }
 
     /**
-     * @param Builder<Model> $builder
+     * @param Builder<Model>                $builder
      * @param class-string<StewardResource> $resource
      * @param Relation<Model, Model, mixed> $relation
-     * @param list<string> $nestedIncludes
+     * @param list<string>                  $nestedIncludes
      */
     private function applyRelatedFieldProjection(
         Builder $builder,
@@ -507,6 +516,7 @@ class GetModelQuery extends ModelQuery implements GetModelQueryContract
 
     /**
      * @param Relation<Model, Model, mixed> $relation
+     *
      * @return list<string>
      */
     private function incomingRelationColumns(Relation $relation, ?callable $qualifier = null): array

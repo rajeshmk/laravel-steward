@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Hatchyu\Steward\Tests\Fixtures\Customer;
 use Hatchyu\Steward\Queries\Criteria\Filters\AbstractFilter;
 use Hatchyu\Steward\Queries\Criteria\Filters\SimpleFilter;
 use Hatchyu\Steward\Queries\Criteria\Searches\PartialSearch;
@@ -11,9 +10,8 @@ use Hatchyu\Steward\Queries\Params\QueryDefinition;
 use Hatchyu\Steward\Queries\Params\QueryParams;
 use Hatchyu\Steward\Queries\Params\SortField;
 use Hatchyu\Steward\Queries\Processors\DefaultQueryParamsProcessor;
+use Hatchyu\Steward\Tests\Fixtures\Customer;
 use Illuminate\Database\Eloquent\Builder;
-use Hatchyu\Steward\Tests\TestCase;
-
 
 test('it supports mapped criteria definitions inspired by http steward', function (): void {
     $processor = new DefaultQueryParamsProcessor();

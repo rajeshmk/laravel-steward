@@ -35,6 +35,7 @@ abstract class AbstractCriterion
 
     /**
      * @param Builder<Model> $query
+     *
      * @return Builder<Model>
      */
     abstract public function apply(Builder $query, mixed $value): Builder;
