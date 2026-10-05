@@ -24,42 +24,16 @@ Production-grade CQRS primitives, declarative HTTP query parsing, and native JSO
 
 ## Installation
 
-### Via Direct Git Repository URL
-
-Add the repository definition to your target Laravel project's `composer.json`:
-
-```json
-"repositories": [
-    {
-        "type": "vcs",
-        "url": "git@github.com:rajeshmk/laravel-steward.git"
-    }
-]
-```
-
-Then require a tagged release:
+Install the package via Composer:
 
 ```bash
-composer require hatchyu/laravel-steward:^0.1
+composer require hatchyu/laravel-steward
 ```
 
-### Via Local Path (For Local Development)
-
-If developing locally alongside your application:
-
-```json
-"repositories": [
-    {
-        "type": "path",
-        "url": "../common-packages/laravel-steward"
-    }
-]
-```
-
-Then run:
+Optionally publish the configuration file:
 
 ```bash
-composer require hatchyu/laravel-steward:@dev
+php artisan vendor:publish --tag="steward-config"
 ```
 
 The package registers:
